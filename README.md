@@ -27,6 +27,12 @@ Aplicación móvil React Native con Expo para validadores de eventos Vibepass.
 - Expo CLI: `npm install -g @expo/cli`
 - Expo Go app en tu dispositivo móvil
 
+### Dependencias principales
+- `expo-camera`: Para escáner QR y cámara nativa
+- `@react-navigation/native`: Para navegación entre pantallas
+- `@react-navigation/stack`: Para navegación tipo stack
+- `expo-status-bar`: Para barra de estado
+
 ### Pasos para ejecutar:
 
 1. **Instalar dependencias:**
