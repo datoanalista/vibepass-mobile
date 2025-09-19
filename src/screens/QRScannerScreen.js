@@ -27,7 +27,7 @@ const QRScannerScreen = ({ navigation }) => {
     setHasPermission(status === 'granted');
   };
 
-  const handleBarCodeScanned = ({ type, data }) => {
+  const handleBarCodeScanned = async ({ type, data }) => {
     if (scanned) return;
     
     setScanned(true);
