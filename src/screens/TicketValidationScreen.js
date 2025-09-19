@@ -1,0 +1,439 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useQR } from '../context/QRContext';
+
+const TicketValidationScreen = ({ navigation }) => {
+  const { qrData, validationStates, markAttendeeEntered } = useQR();
+
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
+
+  const handleMarkEntered = (attendeeIndex, attendeeName) => {
+    Alert.alert(
+      'Confirmar entrada',
+      `¿Confirmar entrada de ${attendeeName}?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirmar',
+          style: 'default',
+          onPress: () => {
+            markAttendeeEntered(attendeeIndex);
+            Alert.alert(
+              'Entrada confirmada',
+              `${attendeeName} ha ingresado al evento.`,
+              [{ text: 'OK' }]
+            );
+          },
+        },
+      ]
+    );
+  };
+
+  const handleMarkExited = (attendeeIndex, attendeeName) => {
+    Alert.alert(
+      'Marcar salida',
+      `¿Marcar salida de ${attendeeName}?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Marcar salida',
+          style: 'destructive',
+          onPress: () => {
+            // This would mark as not entered (reverse the entry)
+            markAttendeeEntered(attendeeIndex, false);
+            Alert.alert(
+              'Salida registrada',
+              `${attendeeName} ha salido del evento.`,
+              [{ text: 'OK' }]
+            );
+          },
+        },
+      ]
+    );
+  };
+
+  if (!qrData?.attendees || qrData.attendees.length === 0) {
+    return (
+      <View style={styles.container}>
+        <StatusBar style="light" backgroundColor="#1B2735" />
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+            <Text style={styles.backButtonIcon}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Validación de Entradas</Text>
+            <Text style={styles.headerSubtitle}>Sin asistentes registrados</Text>
+          </View>
+        </View>
+        
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>🎫</Text>
+          <Text style={styles.emptyTitle}>Sin entradas</Text>
+          <Text style={styles.emptyDescription}>
+            Esta compra no incluye entradas al evento.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  const totalAttendees = qrData.attendees.length;
+  const enteredAttendees = Object.values(validationStates.tickets).filter(Boolean).length;
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="light" backgroundColor="#1B2735" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+          <Text style={styles.backButtonIcon}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Validación de Entradas</Text>
+          <Text style={styles.headerSubtitle}>
+            {enteredAttendees} de {totalAttendees} asistentes han ingresado
+          </Text>
+        </View>
+      </View>
+
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          {/* Summary Card */}
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>📊 Resumen de Entradas</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total de asistentes:</Text>
+              <Text style={styles.summaryValue}>{totalAttendees}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Han ingresado:</Text>
+              <Text style={[styles.summaryValue, styles.enteredValue]}>{enteredAttendees}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Pendientes:</Text>
+              <Text style={[styles.summaryValue, styles.pendingValue]}>
+                {totalAttendees - enteredAttendees}
+              </Text>
+            </View>
+          </View>
+
+          {/* Attendees List */}
+          <View style={styles.attendeesContainer}>
+            <Text style={styles.sectionTitle}>👥 Lista de Asistentes</Text>
+            
+            {qrData.attendees.map((attendee, index) => {
+              const hasEntered = validationStates.tickets[attendee.index] || false;
+              
+              return (
+                <View key={attendee.index} style={styles.attendeeCard}>
+                  <View style={styles.attendeeInfo}>
+                    <View style={styles.attendeeHeader}>
+                      <Text style={styles.attendeeName}>
+                        {attendee.datosPersonales.nombreCompleto}
+                      </Text>
+                      <View style={[
+                        styles.statusBadge, 
+                        hasEntered ? styles.enteredBadge : styles.pendingBadge
+                      ]}>
+                        <Text style={[
+                          styles.statusBadgeText,
+                          hasEntered ? styles.enteredBadgeText : styles.pendingBadgeText
+                        ]}>
+                          {hasEntered ? '✅ Ingresó' : '⏳ Pendiente'}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.attendeeDetails}>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>RUT:</Text>
+                        <Text style={styles.detailValue}>{attendee.datosPersonales.rut}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Tipo entrada:</Text>
+                        <Text style={styles.detailValue}>{attendee.tipoEntrada}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Correo:</Text>
+                        <Text style={styles.detailValue}>{attendee.datosPersonales.correo}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Teléfono:</Text>
+                        <Text style={styles.detailValue}>{attendee.datosPersonales.telefono}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={styles.attendeeActions}>
+                    {!hasEntered ? (
+                      <TouchableOpacity 
+                        style={styles.enterButton}
+                        onPress={() => handleMarkEntered(attendee.index, attendee.datosPersonales.nombreCompleto)}
+                      >
+                        <Text style={styles.enterButtonText}>✅ Marcar entrada</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity 
+                        style={styles.exitButton}
+                        onPress={() => handleMarkExited(attendee.index, attendee.datosPersonales.nombreCompleto)}
+                      >
+                        <Text style={styles.exitButtonText}>❌ Marcar salida</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1B2735',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: '#1B2735',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  backButtonIcon: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 5,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#9CA3AF',
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  summaryCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  summaryLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#374151',
+  },
+  enteredValue: {
+    color: '#059669',
+  },
+  pendingValue: {
+    color: '#F59E0B',
+  },
+  attendeesContainer: {
+    marginTop: 10,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 15,
+  },
+  attendeeCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  attendeeInfo: {
+    marginBottom: 15,
+  },
+  attendeeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  attendeeName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#374151',
+    flex: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  enteredBadge: {
+    backgroundColor: '#D1FAE5',
+  },
+  pendingBadge: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  enteredBadgeText: {
+    color: '#065F46',
+  },
+  pendingBadgeText: {
+    color: '#92400E',
+  },
+  attendeeDetails: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    padding: 15,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
+    flex: 1,
+  },
+  detailValue: {
+    fontSize: 12,
+    color: '#374151',
+    flex: 2,
+    textAlign: 'right',
+  },
+  attendeeActions: {
+    alignItems: 'center',
+  },
+  enterButton: {
+    backgroundColor: '#059669',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    minWidth: 150,
+  },
+  enterButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  exitButton: {
+    backgroundColor: '#DC2626',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    minWidth: 150,
+  },
+  exitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  emptyDescription: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+});
+
+export default TicketValidationScreen;
