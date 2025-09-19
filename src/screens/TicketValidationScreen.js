@@ -68,7 +68,11 @@ const TicketValidationScreen = ({ navigation }) => {
     );
   };
 
-  if (!qrData?.attendees || qrData.attendees.length === 0) {
+  // Check if we have attendees or just ticket count
+  const hasAttendees = qrData?.attendees && qrData.attendees.length > 0;
+  const hasTicketCount = qrData?.tickets && qrData.tickets > 0;
+  
+  if (!hasAttendees && !hasTicketCount) {
     return (
       <View style={styles.container}>
         <StatusBar style="light" backgroundColor="#1B2735" />
@@ -93,8 +97,22 @@ const TicketValidationScreen = ({ navigation }) => {
     );
   }
 
-  const totalAttendees = qrData.attendees.length;
+  // Calculate totals based on available data
+  const totalAttendees = hasAttendees ? qrData.attendees.length : (qrData.tickets || 0);
   const enteredAttendees = Object.values(validationStates.tickets).filter(Boolean).length;
+  
+  // Create mock attendees if we only have ticket count
+  const attendeesToShow = hasAttendees ? qrData.attendees : 
+    Array.from({ length: qrData.tickets }, (_, index) => ({
+      index,
+      tipoEntrada: 'General',
+      datosPersonales: {
+        nombreCompleto: `Asistente ${index + 1}`,
+        rut: 'No especificado',
+        telefono: 'No especificado',
+        correo: 'No especificado'
+      }
+    }));
 
   return (
     <View style={styles.container}>
@@ -138,7 +156,7 @@ const TicketValidationScreen = ({ navigation }) => {
           <View style={styles.attendeesContainer}>
             <Text style={styles.sectionTitle}>👥 Lista de Asistentes</Text>
             
-            {qrData.attendees.map((attendee, index) => {
+            {attendeesToShow.map((attendee, index) => {
               const hasEntered = validationStates.tickets[attendee.index] || false;
               
               return (

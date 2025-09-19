@@ -112,3 +112,4 @@ class StorageService {
 
 export default new StorageService();
 export { STORAGE_KEYS };
+

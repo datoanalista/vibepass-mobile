@@ -206,3 +206,4 @@ Si encuentras algún problema:
 2. Revisa los logs en la consola
 3. Asegúrate de tener conexión a internet
 4. Reinicia el servidor Expo si es necesario
+

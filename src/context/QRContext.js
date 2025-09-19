@@ -29,11 +29,17 @@ export const QRProvider = ({ children }) => {
       activities: {}
     };
 
-    // Initialize ticket validation states (false = not entered)
+    // Handle different QR formats
     if (data.attendees) {
+      // Full format with attendees
       data.attendees.forEach((attendee) => {
         newStates.tickets[attendee.index] = false;
       });
+    } else if (data.tickets && typeof data.tickets === 'number') {
+      // Simple format with just ticket count
+      for (let i = 0; i < data.tickets; i++) {
+        newStates.tickets[i] = false;
+      }
     }
 
     // Initialize food validation states (remaining quantity)

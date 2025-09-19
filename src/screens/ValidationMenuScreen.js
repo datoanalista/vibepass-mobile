@@ -38,7 +38,8 @@ const ValidationMenuScreen = ({ navigation }) => {
   const summary = getValidationSummary();
 
   // Check if each category has items
-  const hasTickets = qrData?.attendees && qrData.attendees.length > 0;
+  const hasTickets = (qrData?.attendees && qrData.attendees.length > 0) || 
+                     (qrData?.tickets && qrData.tickets > 0);
   const hasActivities = qrData?.activities?.items && qrData.activities.items.length > 0;
   const hasFoodOrDrinks = qrData?.food?.items && qrData.food.items.length > 0;
 
@@ -78,25 +79,31 @@ const ValidationMenuScreen = ({ navigation }) => {
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* Event Info Card */}
-          {qrData?.event && (
+          {(qrData?.event || qrData?.evento) && (
             <View style={styles.eventInfoCard}>
               <Text style={styles.eventInfoTitle}>📋 Información de la compra</Text>
               <View style={styles.eventInfoRow}>
                 <Text style={styles.eventInfoLabel}>Evento:</Text>
-                <Text style={styles.eventInfoValue}>{qrData.event.nombre}</Text>
+                <Text style={styles.eventInfoValue}>
+                  {qrData.event?.nombre || qrData.evento}
+                </Text>
               </View>
               <View style={styles.eventInfoRow}>
                 <Text style={styles.eventInfoLabel}>Fecha:</Text>
-                <Text style={styles.eventInfoValue}>{qrData.event.fecha}</Text>
+                <Text style={styles.eventInfoValue}>
+                  {qrData.event?.fecha || qrData.fecha}
+                </Text>
               </View>
               <View style={styles.eventInfoRow}>
                 <Text style={styles.eventInfoLabel}>N° Venta:</Text>
-                <Text style={styles.eventInfoValue}>{qrData.saleNumber || 'N/A'}</Text>
+                <Text style={styles.eventInfoValue}>
+                  {qrData.saleNumber || qrData.saleId || 'N/A'}
+                </Text>
               </View>
               <View style={styles.eventInfoRow}>
                 <Text style={styles.eventInfoLabel}>Total:</Text>
                 <Text style={[styles.eventInfoValue, styles.totalValue]}>
-                  ${qrData.totals?.total?.toLocaleString() || '0'}
+                  ${(qrData.totals?.total || qrData.total || 0).toLocaleString()}
                 </Text>
               </View>
             </View>

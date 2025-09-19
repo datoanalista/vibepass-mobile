@@ -38,9 +38,14 @@ const QRScannerScreen = ({ navigation }) => {
       // Parse QR data
       const qrData = JSON.parse(data);
       
-      // Validate QR data structure
-      if (!qrData.eventoId || !qrData.attendees) {
-        throw new Error('QR inválido - Formato incorrecto');
+      // Validate QR data structure - be more flexible
+      if (!qrData.saleId && !qrData.eventoId && !qrData._id) {
+        throw new Error('QR inválido - No contiene ID de venta válido');
+      }
+      
+      // Check if it has basic event info
+      if (!qrData.evento && !qrData.event) {
+        throw new Error('QR inválido - No contiene información del evento');
       }
 
       // Set QR data in context
