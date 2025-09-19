@@ -55,9 +55,38 @@ class ApiService {
     try {
       console.log('🔍 Fetching sale details for:', saleId);
       
-      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/sales/${saleId}`, {
-        method: 'GET',
-      });
+      // Try different possible endpoints
+      const possibleEndpoints = [
+        `/api/sales/by-sale-id/${saleId}`,
+        `/api/sales/search?saleId=${saleId}`,
+        `/api/sales/${saleId}`
+      ];
+      
+      let response;
+      let lastError;
+      
+      // Try each endpoint until one works
+      for (const endpoint of possibleEndpoints) {
+        try {
+          console.log('🔍 Trying endpoint:', endpoint);
+          response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}${endpoint}`, {
+            method: 'GET',
+          });
+          
+          if (response.ok) {
+            console.log('✅ Endpoint worked:', endpoint);
+            break;
+          }
+        } catch (error) {
+          console.log('❌ Endpoint failed:', endpoint, error.message);
+          lastError = error;
+          continue;
+        }
+      }
+      
+      if (!response || !response.ok) {
+        throw lastError || new Error('All endpoints failed');
+      }
 
       console.log('📡 Sale details response status:', response.status);
 

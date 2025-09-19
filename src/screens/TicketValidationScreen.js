@@ -108,9 +108,9 @@ const TicketValidationScreen = ({ navigation }) => {
       tipoEntrada: 'General',
       datosPersonales: {
         nombreCompleto: `Asistente ${index + 1}`,
-        rut: 'No especificado',
-        telefono: 'No especificado',
-        correo: 'No especificado'
+        rut: 'No disponible',
+        telefono: 'No disponible',
+        correo: 'No disponible'
       }
     }));
 
@@ -133,6 +133,16 @@ const TicketValidationScreen = ({ navigation }) => {
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
+          {/* Warning for simple format */}
+          {qrData?.isSimpleFormat && (
+            <View style={styles.warningCard}>
+              <Text style={styles.warningTitle}>⚠️ Información limitada</Text>
+              <Text style={styles.warningText}>
+                {qrData.errorMessage || 'Mostrando información básica del QR. Los datos detallados de asistentes no están disponibles.'}
+              </Text>
+            </View>
+          )}
+
           {/* Summary Card */}
           <View style={styles.summaryCard}>
             <Text style={styles.summaryTitle}>📊 Resumen de Entradas</Text>
@@ -272,6 +282,33 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 40,
+  },
+  warningCard: {
+    backgroundColor: 'rgba(251, 191, 36, 0.95)',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  warningTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#92400E',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  warningText: {
+    fontSize: 12,
+    color: '#92400E',
+    textAlign: 'center',
+    lineHeight: 16,
   },
   summaryCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',

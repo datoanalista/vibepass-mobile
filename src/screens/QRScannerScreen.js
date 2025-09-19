@@ -75,7 +75,13 @@ const QRScannerScreen = ({ navigation }) => {
         } catch (error) {
           console.log('⚠️ Error fetching sale details, using simple format:', error.message);
           // Continue with simple format if API call fails
-          setQRData(qrData);
+          // Add a flag to indicate this is simple format
+          const simpleFormatData = {
+            ...qrData,
+            isSimpleFormat: true,
+            errorMessage: 'No se pudieron obtener los datos completos de la venta'
+          };
+          setQRData(simpleFormatData);
         }
       } else {
         // This is already a complete QR or doesn't need additional data
