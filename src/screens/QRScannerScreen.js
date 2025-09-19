@@ -10,6 +10,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { CameraView, Camera } from 'expo-camera';
 import { useQR } from '../context/QRContext';
+import ApiService from '../services/api';
 
 const QRScannerScreen = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState(null);
@@ -48,16 +49,46 @@ const QRScannerScreen = ({ navigation }) => {
         throw new Error('QR inválido - No contiene información del evento');
       }
 
-      // Set QR data in context
-      setQRData(qrData);
+      // Check if this is a simple QR that needs additional data
+      if (qrData.saleId && !qrData.attendees) {
+        console.log('🔍 Simple QR detected, fetching complete sale details...');
+        
+        try {
+          const saleDetails = await ApiService.getSaleDetails(qrData.saleId);
+          
+          if (saleDetails.success) {
+            // Merge the QR data with the complete sale details
+            const completeData = {
+              ...qrData,
+              ...saleDetails.data,
+              // Keep the original simple format fields as backup
+              originalQR: qrData
+            };
+            
+            console.log('✅ Complete sale data retrieved:', completeData);
+            setQRData(completeData);
+          } else {
+            // If we can't get complete data, use the simple format
+            console.log('⚠️ Could not get complete data, using simple format');
+            setQRData(qrData);
+          }
+        } catch (error) {
+          console.log('⚠️ Error fetching sale details, using simple format:', error.message);
+          // Continue with simple format if API call fails
+          setQRData(qrData);
+        }
+      } else {
+        // This is already a complete QR or doesn't need additional data
+        setQRData(qrData);
+      }
 
-      console.log('✅ QR data parsed successfully:', qrData);
+      console.log('✅ QR data processed successfully');
 
       // Navigate to validation menu
       setTimeout(() => {
         setLoading(false);
         navigation.navigate('ValidationMenu');
-      }, 1000);
+      }, 1500); // Increased timeout to allow for API call
 
     } catch (error) {
       console.error('❌ Error parsing QR code:', error);
@@ -158,7 +189,9 @@ const QRScannerScreen = ({ navigation }) => {
           <View style={styles.loadingOverlay}>
             <View style={styles.loadingContent}>
               <ActivityIndicator size="large" color="#FFFFFF" />
-              <Text style={styles.loadingOverlayText}>Procesando QR...</Text>
+              <Text style={styles.loadingOverlayText}>
+                {scanned ? 'Obteniendo datos completos...' : 'Procesando QR...'}
+              </Text>
             </View>
           </View>
         )}

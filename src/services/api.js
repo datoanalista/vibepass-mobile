@@ -50,6 +50,46 @@ class ApiService {
     }
   }
 
+  // Get sale details by saleId
+  async getSaleDetails(saleId) {
+    try {
+      console.log('🔍 Fetching sale details for:', saleId);
+      
+      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/sales/${saleId}`, {
+        method: 'GET',
+      });
+
+      console.log('📡 Sale details response status:', response.status);
+
+      const data = await response.json();
+      console.log('📦 Sale details data:', data);
+
+      if (response.ok) {
+        if (data.status === 'success' && data.data) {
+          return {
+            success: true,
+            data: data.data,
+            message: data.message || 'Sale details retrieved successfully'
+          };
+        } else {
+          throw new Error(data.message || 'Failed to get sale details');
+        }
+      } else {
+        throw new Error(data.message || `HTTP Error ${response.status}`);
+      }
+    } catch (error) {
+      console.error('❌ Sale details error:', error);
+      
+      if (error.message.includes('timeout')) {
+        throw new Error('Connection timeout - Please check your internet connection');
+      } else if (error.message.includes('Network')) {
+        throw new Error('Network error - Please check your internet connection');
+      } else {
+        throw new Error(error.message || 'Failed to get sale details');
+      }
+    }
+  }
+
   // Login method
   async login(email, password) {
     try {
