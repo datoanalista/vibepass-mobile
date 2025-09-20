@@ -17,7 +17,8 @@ const ActivityValidationScreen = ({ navigation }) => {
     navigation.goBack();
   };
 
-  const activityItems = qrData?.activities?.items || [];
+  // API returns activities as direct array, not activities.items
+  const activityItems = qrData?.activities || [];
 
   const handleRedeemItem = (item, quantity = 1) => {
     const remainingQuantity = validationStates.activities[item.id] || 0;
@@ -87,10 +88,11 @@ const ActivityValidationScreen = ({ navigation }) => {
     );
   }
 
-  const totalItems = activityItems.reduce((sum, item) => sum + item.cantidad, 0);
+  const totalItems = activityItems.reduce((sum, item) => sum + (item.cantidadComprada || item.cantidad || 0), 0);
   const redeemedItems = activityItems.reduce((sum, item) => {
     const remaining = validationStates.activities[item.id] || 0;
-    return sum + (item.cantidad - remaining);
+    const purchased = item.cantidadComprada || item.cantidad || 0;
+    return sum + (purchased - remaining);
   }, 0);
 
   return (
@@ -143,7 +145,8 @@ const ActivityValidationScreen = ({ navigation }) => {
             
             {activityItems.map((item) => {
               const remainingQuantity = validationStates.activities[item.id] || 0;
-              const redeemedQuantity = item.cantidad - remainingQuantity;
+              const purchasedQuantity = item.cantidadComprada || item.cantidad || 0;
+              const redeemedQuantity = purchasedQuantity - remainingQuantity;
               const isFullyRedeemed = remainingQuantity === 0;
               
               return (
@@ -171,7 +174,7 @@ const ActivityValidationScreen = ({ navigation }) => {
                       </View>
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>Cupos comprados:</Text>
-                        <Text style={styles.detailValue}>{item.cantidad}</Text>
+                        <Text style={styles.detailValue}>{purchasedQuantity}</Text>
                       </View>
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>Canjeados:</Text>

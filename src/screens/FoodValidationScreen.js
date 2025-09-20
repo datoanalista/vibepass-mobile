@@ -89,10 +89,11 @@ const FoodValidationScreen = ({ navigation }) => {
     );
   }
 
-  const totalItems = foodItems.reduce((sum, item) => sum + item.cantidad, 0);
+  const totalItems = foodItems.reduce((sum, item) => sum + (item.cantidadComprada || item.cantidad || 0), 0);
   const redeemedItems = foodItems.reduce((sum, item) => {
     const remaining = validationStates.food[item.id] || 0;
-    return sum + (item.cantidad - remaining);
+    const purchased = item.cantidadComprada || item.cantidad || 0;
+    return sum + (purchased - remaining);
   }, 0);
 
   return (
@@ -145,7 +146,8 @@ const FoodValidationScreen = ({ navigation }) => {
             
             {foodItems.map((item) => {
               const remainingQuantity = validationStates.food[item.id] || 0;
-              const redeemedQuantity = item.cantidad - remainingQuantity;
+              const purchasedQuantity = item.cantidadComprada || item.cantidad || 0;
+              const redeemedQuantity = purchasedQuantity - remainingQuantity;
               const isFullyRedeemed = remainingQuantity === 0;
               
               return (
@@ -173,7 +175,7 @@ const FoodValidationScreen = ({ navigation }) => {
                       </View>
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>Cantidad comprada:</Text>
-                        <Text style={styles.detailValue}>{item.cantidad}</Text>
+                        <Text style={styles.detailValue}>{purchasedQuantity}</Text>
                       </View>
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>Canjeadas:</Text>
