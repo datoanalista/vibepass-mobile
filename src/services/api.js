@@ -1,4 +1,6 @@
 // API Configuration for Ticketera Mobile App
+import StorageService from './storage';
+
 const API_BASE_URL = 'https://5cc4625338a4.ngrok-free.app';
 
 const API_CONFIG = {
@@ -55,12 +57,23 @@ class ApiService {
     try {
       console.log('🔍 Fetching sale details for:', saleNumber);
       
+      // Get the stored token for authentication
+      const token = await StorageService.getToken();
+      
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+      
       // Use the correct redemptions endpoint
       const endpoint = `/api/redemptions/sale/${saleNumber}`;
       console.log('🔍 Using endpoint:', endpoint);
+      console.log('🔐 Using token for authentication');
       
       const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}${endpoint}`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       console.log('📡 Sale details response status:', response.status);
