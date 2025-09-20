@@ -18,7 +18,8 @@ const FoodValidationScreen = ({ navigation }) => {
   };
 
   // Get all food items (including drinks since they're grouped together)
-  const foodItems = qrData?.food?.items || [];
+  // API returns products array instead of food.items
+  const foodItems = qrData?.products || [];
 
   const handleRedeemItem = (item, quantity = 1) => {
     const remainingQuantity = validationStates.food[item.id] || 0;

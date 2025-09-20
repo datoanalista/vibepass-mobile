@@ -40,12 +40,23 @@ const ValidationMenuScreen = ({ navigation }) => {
   // Check if each category has items
   const hasTickets = (qrData?.attendees && qrData.attendees.length > 0) || 
                      (qrData?.tickets && qrData.tickets > 0);
-  const hasActivities = qrData?.activities?.items && qrData.activities.items.length > 0;
-  const hasFoodItems = qrData?.food?.items && qrData.food.items.length > 0;
+  
+  // Fix: API returns 'activities' as direct array, not activities.items
+  const hasActivities = qrData?.activities && Array.isArray(qrData.activities) && qrData.activities.length > 0;
+  
+  // Fix: API returns 'products' instead of 'food.items'
+  const hasFood = qrData?.products && Array.isArray(qrData.products) && qrData.products.length > 0;
 
-  // For this implementation, we'll show "Alimentos y Bebestibles" as one category
-  // since the backend groups them together in the "food" array
-  const hasFood = hasFoodItems;
+  // Debug logging
+  console.log('🔍 ValidationMenu - Fixed structure check:', {
+    hasQRData: !!qrData,
+    hasTickets,
+    hasActivities,
+    hasFood,
+    productsCount: qrData?.products?.length || 0,
+    activitiesCount: qrData?.activities?.length || 0,
+    attendeesCount: qrData?.attendees?.length || 0
+  });
 
   return (
     <View style={styles.container}>
@@ -152,7 +163,7 @@ const ValidationMenuScreen = ({ navigation }) => {
                 <Text style={styles.optionDescription}>Comida y bebidas del evento</Text>
                 <View style={styles.optionBadge}>
                   <Text style={styles.optionBadgeText}>
-                    {qrData.food.items.length} item{qrData.food.items.length !== 1 ? 's' : ''}
+                    {qrData?.products?.length || 0} item{(qrData?.products?.length || 0) !== 1 ? 's' : ''}
                   </Text>
                 </View>
               </TouchableOpacity>

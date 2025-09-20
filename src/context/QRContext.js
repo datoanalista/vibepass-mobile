@@ -43,16 +43,18 @@ export const QRProvider = ({ children }) => {
     }
 
     // Initialize food validation states (remaining quantity)
-    if (data.food && data.food.items) {
-      data.food.items.forEach((item) => {
-        newStates.food[item.id] = item.cantidad;
+    // API returns 'products' instead of 'food.items'
+    if (data.products && Array.isArray(data.products)) {
+      data.products.forEach((item) => {
+        newStates.food[item.id] = item.cantidadComprada || item.cantidad || 0;
       });
     }
 
     // Initialize activity validation states (remaining quantity)
-    if (data.activities && data.activities.items) {
-      data.activities.items.forEach((item) => {
-        newStates.activities[item.id] = item.cantidad;
+    // API returns 'activities' as direct array, not activities.items
+    if (data.activities && Array.isArray(data.activities)) {
+      data.activities.forEach((item) => {
+        newStates.activities[item.id] = item.cantidadComprada || item.cantidad || 0;
       });
     }
 

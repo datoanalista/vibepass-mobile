@@ -68,6 +68,14 @@ const QRScannerScreen = ({ navigation }) => {
             };
             
             console.log('✅ Complete sale data retrieved:', completeData);
+            console.log('🔍 QR Scanner - Data structure check:', {
+              hasFood: !!completeData.food,
+              foodItems: completeData.food?.items?.length || 0,
+              hasActivities: !!completeData.activities,
+              activitiesItems: completeData.activities?.items?.length || 0,
+              foodStructure: completeData.food,
+              activitiesStructure: completeData.activities
+            });
             setQRData(completeData);
           } else {
             // If we can't get complete data, use the simple format
