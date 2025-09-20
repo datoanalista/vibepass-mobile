@@ -40,7 +40,7 @@ const QRScannerScreen = ({ navigation }) => {
       const qrData = JSON.parse(data);
       
       // Validate QR data structure - be more flexible
-      if (!qrData.saleId && !qrData.eventoId && !qrData._id) {
+      if (!qrData.saleId && !qrData.saleNumber && !qrData.eventoId && !qrData._id) {
         throw new Error('QR inválido - No contiene ID de venta válido');
       }
       
@@ -50,11 +50,13 @@ const QRScannerScreen = ({ navigation }) => {
       }
 
       // Check if this is a simple QR that needs additional data
-      if (qrData.saleId && !qrData.attendees) {
+      if ((qrData.saleId || qrData.saleNumber) && !qrData.attendees) {
         console.log('🔍 Simple QR detected, fetching complete sale details...');
         
         try {
-          const saleDetails = await ApiService.getSaleDetails(qrData.saleId);
+          // Use saleNumber if available, otherwise use saleId
+          const saleIdentifier = qrData.saleNumber || qrData.saleId;
+          const saleDetails = await ApiService.getSaleDetails(saleIdentifier);
           
           if (saleDetails.success) {
             // Merge the QR data with the complete sale details
