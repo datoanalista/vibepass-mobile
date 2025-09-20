@@ -37,6 +37,27 @@ const ValidationMenuScreen = ({ navigation }) => {
 
   const summary = getValidationSummary();
 
+  // Format date function
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    try {
+      const date = new Date(dateString);
+      const months = [
+        'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+        'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+      ];
+      
+      const day = date.getDate();
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
+      
+      return `${day} de ${month} de ${year}`;
+    } catch (error) {
+      return dateString; // Return original if parsing fails
+    }
+  };
+
   // Check if each category has items
   const hasTickets = (qrData?.attendees && qrData.attendees.length > 0) || 
                      (qrData?.tickets && qrData.tickets > 0);
@@ -88,7 +109,7 @@ const ValidationMenuScreen = ({ navigation }) => {
               <View style={styles.eventInfoRow}>
                 <Text style={styles.eventInfoLabel}>Fecha:</Text>
                 <Text style={styles.eventInfoValue}>
-                  {qrData.event?.fecha || qrData.fecha}
+                  {formatDate(qrData.event?.fecha || qrData.fecha)}
                 </Text>
               </View>
               <View style={styles.eventInfoRow}>
@@ -140,13 +161,11 @@ const ValidationMenuScreen = ({ navigation }) => {
                 </View>
                 <Text style={styles.optionTitle}>Atracciones</Text>
                 <Text style={styles.optionDescription}>Actividades del evento</Text>
-                {summary && (
-                  <View style={styles.optionBadge}>
-                    <Text style={styles.optionBadgeText}>
-                      {summary.activities.redeemed}/{summary.activities.total}
-                    </Text>
-                  </View>
-                )}
+                <View style={styles.optionBadge}>
+                  <Text style={styles.optionBadgeText}>
+                    {qrData?.activities?.length || 0} actividad{(qrData?.activities?.length || 0) !== 1 ? 'es' : ''}
+                  </Text>
+                </View>
               </TouchableOpacity>
             )}
 
