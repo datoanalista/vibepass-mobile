@@ -41,25 +41,11 @@ const ValidationMenuScreen = ({ navigation }) => {
   const hasTickets = (qrData?.attendees && qrData.attendees.length > 0) || 
                      (qrData?.tickets && qrData.tickets > 0);
   const hasActivities = qrData?.activities?.items && qrData.activities.items.length > 0;
-  const hasFoodOrDrinks = qrData?.food?.items && qrData.food.items.length > 0;
+  const hasFoodItems = qrData?.food?.items && qrData.food.items.length > 0;
 
-  // Separate food and drinks (this is a simple separation, you might want to enhance this logic)
-  const foodItems = hasFoodOrDrinks ? qrData.food.items.filter(item => 
-    !item.nombre.toLowerCase().includes('bebida') && 
-    !item.nombre.toLowerCase().includes('drink') &&
-    !item.nombre.toLowerCase().includes('jugo') &&
-    !item.nombre.toLowerCase().includes('agua')
-  ) : [];
-
-  const drinkItems = hasFoodOrDrinks ? qrData.food.items.filter(item => 
-    item.nombre.toLowerCase().includes('bebida') || 
-    item.nombre.toLowerCase().includes('drink') ||
-    item.nombre.toLowerCase().includes('jugo') ||
-    item.nombre.toLowerCase().includes('agua')
-  ) : [];
-
-  const hasFood = foodItems.length > 0;
-  const hasDrinks = drinkItems.length > 0;
+  // For this implementation, we'll show "Alimentos y Bebestibles" as one category
+  // since the backend groups them together in the "food" array
+  const hasFood = hasFoodItems;
 
   return (
     <View style={styles.container}>
@@ -153,46 +139,27 @@ const ValidationMenuScreen = ({ navigation }) => {
               </TouchableOpacity>
             )}
 
-            {/* Food Option */}
+            {/* Food & Drinks Option (Combined) */}
             {hasFood && (
               <TouchableOpacity 
                 style={[styles.optionCard, styles.foodOption]}
                 onPress={() => handleOptionPress('food')}
               >
                 <View style={styles.optionIcon}>
-                  <Text style={styles.optionIconText}>🍕</Text>
+                  <Text style={styles.optionIconText}>🍽️</Text>
                 </View>
-                <Text style={styles.optionTitle}>Alimentos</Text>
-                <Text style={styles.optionDescription}>Comida del evento</Text>
+                <Text style={styles.optionTitle}>Alimentos y Bebestibles</Text>
+                <Text style={styles.optionDescription}>Comida y bebidas del evento</Text>
                 <View style={styles.optionBadge}>
                   <Text style={styles.optionBadgeText}>
-                    {foodItems.length} item{foodItems.length !== 1 ? 's' : ''}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-
-            {/* Drinks Option */}
-            {hasDrinks && (
-              <TouchableOpacity 
-                style={[styles.optionCard, styles.drinkOption]}
-                onPress={() => handleOptionPress('drinks')}
-              >
-                <View style={styles.optionIcon}>
-                  <Text style={styles.optionIconText}>🥤</Text>
-                </View>
-                <Text style={styles.optionTitle}>Bebestibles</Text>
-                <Text style={styles.optionDescription}>Bebidas del evento</Text>
-                <View style={styles.optionBadge}>
-                  <Text style={styles.optionBadgeText}>
-                    {drinkItems.length} item{drinkItems.length !== 1 ? 's' : ''}
+                    {qrData.food.items.length} item{qrData.food.items.length !== 1 ? 's' : ''}
                   </Text>
                 </View>
               </TouchableOpacity>
             )}
 
             {/* No items message */}
-            {!hasTickets && !hasActivities && !hasFood && !hasDrinks && (
+            {!hasTickets && !hasActivities && !hasFood && (
               <View style={styles.noItemsCard}>
                 <Text style={styles.noItemsIcon}>📭</Text>
                 <Text style={styles.noItemsTitle}>Sin elementos para validar</Text>

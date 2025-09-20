@@ -17,13 +17,8 @@ const FoodValidationScreen = ({ navigation }) => {
     navigation.goBack();
   };
 
-  // Filter food items (exclude drinks)
-  const foodItems = qrData?.food?.items?.filter(item => 
-    !item.nombre.toLowerCase().includes('bebida') && 
-    !item.nombre.toLowerCase().includes('drink') &&
-    !item.nombre.toLowerCase().includes('jugo') &&
-    !item.nombre.toLowerCase().includes('agua')
-  ) || [];
+  // Get all food items (including drinks since they're grouped together)
+  const foodItems = qrData?.food?.items || [];
 
   const handleRedeemItem = (item, quantity = 1) => {
     const remainingQuantity = validationStates.food[item.id] || 0;
@@ -77,16 +72,16 @@ const FoodValidationScreen = ({ navigation }) => {
             <Text style={styles.backButtonIcon}>←</Text>
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Validación de Alimentos</Text>
-            <Text style={styles.headerSubtitle}>Sin alimentos registrados</Text>
+          <Text style={styles.headerTitle}>Validación de Alimentos y Bebestibles</Text>
+          <Text style={styles.headerSubtitle}>Sin productos registrados</Text>
           </View>
         </View>
         
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🍕</Text>
-          <Text style={styles.emptyTitle}>Sin alimentos</Text>
+          <Text style={styles.emptyTitle}>Sin productos</Text>
           <Text style={styles.emptyDescription}>
-            Esta compra no incluye alimentos para canjear.
+            Esta compra no incluye alimentos ni bebestibles para canjear.
           </Text>
         </View>
       </View>
@@ -109,7 +104,7 @@ const FoodValidationScreen = ({ navigation }) => {
           <Text style={styles.backButtonIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Validación de Alimentos</Text>
+          <Text style={styles.headerTitle}>Validación de Alimentos y Bebestibles</Text>
           <Text style={styles.headerSubtitle}>
             {redeemedItems} de {totalItems} unidades canjeadas
           </Text>
@@ -120,7 +115,7 @@ const FoodValidationScreen = ({ navigation }) => {
         <View style={styles.content}>
           {/* Summary Card */}
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>📊 Resumen de Alimentos</Text>
+            <Text style={styles.summaryTitle}>📊 Resumen de Alimentos y Bebestibles</Text>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Total de unidades:</Text>
               <Text style={styles.summaryValue}>{totalItems}</Text>
@@ -145,7 +140,7 @@ const FoodValidationScreen = ({ navigation }) => {
 
           {/* Food Items List */}
           <View style={styles.itemsContainer}>
-            <Text style={styles.sectionTitle}>🍽️ Lista de Alimentos</Text>
+            <Text style={styles.sectionTitle}>🍽️ Lista de Productos</Text>
             
             {foodItems.map((item) => {
               const remainingQuantity = validationStates.food[item.id] || 0;
