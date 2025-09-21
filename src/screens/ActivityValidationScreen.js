@@ -11,7 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useQR } from '../context/QRContext';
 
 const ActivityValidationScreen = ({ navigation }) => {
-  const { qrData, validationStates, redeemActivityItem } = useQR();
+  const { qrData, validationStates, redeemActivityItem, redeemActivitiesAPI } = useQR();
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -20,7 +20,7 @@ const ActivityValidationScreen = ({ navigation }) => {
   // API returns activities as direct array, not activities.items
   const activityItems = qrData?.activities || [];
 
-  const handleRedeemItem = (item, quantity = 1) => {
+  const handleRedeemItem = async (item, quantity = 1) => {
     const remainingQuantity = validationStates.activities[item.id] || 0;
     
     if (remainingQuantity <= 0) {
@@ -45,13 +45,29 @@ const ActivityValidationScreen = ({ navigation }) => {
         {
           text: 'Confirmar',
           style: 'default',
-          onPress: () => {
-            redeemActivityItem(item.id, actualQuantity);
-            Alert.alert(
-              'Canje exitoso',
-              `Se han canjeado ${actualQuantity} cupo${actualQuantity !== 1 ? 's' : ''} para ${item.nombreActividad}.`,
-              [{ text: 'OK' }]
-            );
+          onPress: async () => {
+            try {
+              console.log('🎯 Redeeming activity via API:', { itemId: item.id, cantidad: actualQuantity });
+              
+              // Call API to redeem activity
+              await redeemActivitiesAPI([{
+                itemId: item.id,
+                cantidad: actualQuantity
+              }]);
+              
+              Alert.alert(
+                'Canje exitoso',
+                `Se han canjeado ${actualQuantity} cupo${actualQuantity !== 1 ? 's' : ''} para ${item.nombreActividad}.`,
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('❌ Error redeeming activity:', error);
+              Alert.alert(
+                'Error',
+                `No se pudo canjear ${item.nombreActividad}. ${error.message}`,
+                [{ text: 'OK' }]
+              );
+            }
           },
         },
       ]

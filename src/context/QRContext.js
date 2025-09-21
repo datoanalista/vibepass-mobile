@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import ApiService from '../services/api';
 
 // Create QR Context
 const QRContext = createContext();
@@ -114,6 +115,83 @@ export const QRProvider = ({ children }) => {
     });
   };
 
+  // API Integration Methods
+  
+  // Check-in attendees via API
+  const checkInAttendeesAPI = async (attendeeIndexes) => {
+    try {
+      const saleNumber = qrData?.saleNumber || qrData?.saleId;
+      if (!saleNumber) {
+        throw new Error('No sale number available');
+      }
+
+      const result = await ApiService.checkInAttendees(saleNumber, attendeeIndexes);
+      
+      if (result.success) {
+        // Update local state to reflect the check-in
+        attendeeIndexes.forEach(index => {
+          markAttendeeEntered(index);
+        });
+        return result;
+      } else {
+        throw new Error(result.message || 'Check-in failed');
+      }
+    } catch (error) {
+      console.error('❌ Check-in API error:', error);
+      throw error;
+    }
+  };
+
+  // Redeem products via API
+  const redeemProductsAPI = async (redemptions) => {
+    try {
+      const saleNumber = qrData?.saleNumber || qrData?.saleId;
+      if (!saleNumber) {
+        throw new Error('No sale number available');
+      }
+
+      const result = await ApiService.redeemProducts(saleNumber, redemptions);
+      
+      if (result.success) {
+        // Update local state to reflect the redemptions
+        redemptions.forEach(redemption => {
+          redeemFoodItem(redemption.itemId, redemption.cantidad);
+        });
+        return result;
+      } else {
+        throw new Error(result.message || 'Products redemption failed');
+      }
+    } catch (error) {
+      console.error('❌ Products redemption API error:', error);
+      throw error;
+    }
+  };
+
+  // Redeem activities via API
+  const redeemActivitiesAPI = async (redemptions) => {
+    try {
+      const saleNumber = qrData?.saleNumber || qrData?.saleId;
+      if (!saleNumber) {
+        throw new Error('No sale number available');
+      }
+
+      const result = await ApiService.redeemActivities(saleNumber, redemptions);
+      
+      if (result.success) {
+        // Update local state to reflect the redemptions
+        redemptions.forEach(redemption => {
+          redeemActivityItem(redemption.itemId, redemption.cantidad);
+        });
+        return result;
+      } else {
+        throw new Error(result.message || 'Activities redemption failed');
+      }
+    } catch (error) {
+      console.error('❌ Activities redemption API error:', error);
+      throw error;
+    }
+  };
+
   // Get validation summary
   const getValidationSummary = () => {
     if (!qrData) return null;
@@ -148,7 +226,11 @@ export const QRProvider = ({ children }) => {
     redeemFoodItem,
     redeemActivityItem,
     clearQRData,
-    getValidationSummary
+    getValidationSummary,
+    // API methods
+    checkInAttendeesAPI,
+    redeemProductsAPI,
+    redeemActivitiesAPI
   };
 
   return (

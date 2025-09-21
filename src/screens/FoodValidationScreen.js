@@ -11,7 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useQR } from '../context/QRContext';
 
 const FoodValidationScreen = ({ navigation }) => {
-  const { qrData, validationStates, redeemFoodItem } = useQR();
+  const { qrData, validationStates, redeemFoodItem, redeemProductsAPI } = useQR();
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -21,7 +21,7 @@ const FoodValidationScreen = ({ navigation }) => {
   // API returns products array instead of food.items
   const foodItems = qrData?.products || [];
 
-  const handleRedeemItem = (item, quantity = 1) => {
+  const handleRedeemItem = async (item, quantity = 1) => {
     const remainingQuantity = validationStates.food[item.id] || 0;
     
     if (remainingQuantity <= 0) {
@@ -46,13 +46,29 @@ const FoodValidationScreen = ({ navigation }) => {
         {
           text: 'Confirmar',
           style: 'default',
-          onPress: () => {
-            redeemFoodItem(item.id, actualQuantity);
-            Alert.alert(
-              'Canje exitoso',
-              `Se han canjeado ${actualQuantity} unidad${actualQuantity !== 1 ? 'es' : ''} de ${item.nombre}.`,
-              [{ text: 'OK' }]
-            );
+          onPress: async () => {
+            try {
+              console.log('🍽️ Redeeming product via API:', { itemId: item.id, cantidad: actualQuantity });
+              
+              // Call API to redeem product
+              await redeemProductsAPI([{
+                itemId: item.id,
+                cantidad: actualQuantity
+              }]);
+              
+              Alert.alert(
+                'Canje exitoso',
+                `Se han canjeado ${actualQuantity} unidad${actualQuantity !== 1 ? 'es' : ''} de ${item.nombre}.`,
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('❌ Error redeeming product:', error);
+              Alert.alert(
+                'Error',
+                `No se pudo canjear ${item.nombre}. ${error.message}`,
+                [{ text: 'OK' }]
+              );
+            }
           },
         },
       ]

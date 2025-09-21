@@ -1,7 +1,7 @@
 // API Configuration for Ticketera Mobile App
 import StorageService from './storage';
 
-const API_BASE_URL = 'https://5cc4625338a4.ngrok-free.app';
+const API_BASE_URL = 'https://48a011d134ed.ngrok-free.app';
 
 const API_CONFIG = {
   BASE_URL: API_BASE_URL,
@@ -104,6 +104,138 @@ class ApiService {
       } else {
         throw new Error(error.message || 'Failed to get sale details');
       }
+    }
+  }
+
+  // Check-in attendees
+  async checkInAttendees(saleNumber, attendeeIndexes) {
+    try {
+      console.log('🎫 Checking in attendees:', { saleNumber, attendeeIndexes });
+      
+      const token = await StorageService.getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/redemptions/checkin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          saleNumber,
+          attendeeIndexes
+        }),
+      });
+
+      console.log('📡 Check-in response status:', response.status);
+      const data = await response.json();
+      console.log('📦 Check-in response data:', data);
+
+      if (response.ok) {
+        if (data.status === 'success') {
+          return {
+            success: true,
+            data: data.data,
+            message: data.message || 'Check-in successful'
+          };
+        } else {
+          throw new Error(data.message || 'Check-in failed');
+        }
+      } else {
+        throw new Error(data.message || `HTTP Error ${response.status}`);
+      }
+    } catch (error) {
+      console.error('❌ Check-in error:', error);
+      throw new Error(error.message || 'Check-in failed');
+    }
+  }
+
+  // Redeem products (food and drinks)
+  async redeemProducts(saleNumber, redemptions) {
+    try {
+      console.log('🍽️ Redeeming products:', { saleNumber, redemptions });
+      
+      const token = await StorageService.getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/redemptions/redeem-products`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          saleNumber,
+          redemptions
+        }),
+      });
+
+      console.log('📡 Products redemption response status:', response.status);
+      const data = await response.json();
+      console.log('📦 Products redemption response data:', data);
+
+      if (response.ok) {
+        if (data.status === 'success') {
+          return {
+            success: true,
+            data: data.data,
+            message: data.message || 'Products redeemed successfully'
+          };
+        } else {
+          throw new Error(data.message || 'Products redemption failed');
+        }
+      } else {
+        throw new Error(data.message || `HTTP Error ${response.status}`);
+      }
+    } catch (error) {
+      console.error('❌ Products redemption error:', error);
+      throw new Error(error.message || 'Products redemption failed');
+    }
+  }
+
+  // Redeem activities
+  async redeemActivities(saleNumber, redemptions) {
+    try {
+      console.log('🎯 Redeeming activities:', { saleNumber, redemptions });
+      
+      const token = await StorageService.getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/redemptions/redeem-activities`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          saleNumber,
+          redemptions
+        }),
+      });
+
+      console.log('📡 Activities redemption response status:', response.status);
+      const data = await response.json();
+      console.log('📦 Activities redemption response data:', data);
+
+      if (response.ok) {
+        if (data.status === 'success') {
+          return {
+            success: true,
+            data: data.data,
+            message: data.message || 'Activities redeemed successfully'
+          };
+        } else {
+          throw new Error(data.message || 'Activities redemption failed');
+        }
+      } else {
+        throw new Error(data.message || `HTTP Error ${response.status}`);
+      }
+    } catch (error) {
+      console.error('❌ Activities redemption error:', error);
+      throw new Error(error.message || 'Activities redemption failed');
     }
   }
 

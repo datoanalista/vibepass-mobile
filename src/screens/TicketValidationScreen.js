@@ -11,13 +11,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useQR } from '../context/QRContext';
 
 const TicketValidationScreen = ({ navigation }) => {
-  const { qrData, validationStates, markAttendeeEntered } = useQR();
+  const { qrData, validationStates, markAttendeeEntered, checkInAttendeesAPI } = useQR();
 
   const handleGoBack = () => {
     navigation.goBack();
   };
 
-  const handleMarkEntered = (attendeeIndex, attendeeName) => {
+  const handleMarkEntered = async (attendeeIndex, attendeeName) => {
     Alert.alert(
       'Confirmar entrada',
       `¿Confirmar entrada de ${attendeeName}?`,
@@ -29,13 +29,26 @@ const TicketValidationScreen = ({ navigation }) => {
         {
           text: 'Confirmar',
           style: 'default',
-          onPress: () => {
-            markAttendeeEntered(attendeeIndex);
-            Alert.alert(
-              'Entrada confirmada',
-              `${attendeeName} ha ingresado al evento.`,
-              [{ text: 'OK' }]
-            );
+          onPress: async () => {
+            try {
+              console.log('🎫 Marking attendee as entered via API:', attendeeIndex);
+              
+              // Call API to check-in attendee
+              await checkInAttendeesAPI([attendeeIndex]);
+              
+              Alert.alert(
+                'Entrada confirmada',
+                `${attendeeName} ha ingresado al evento.`,
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('❌ Error checking in attendee:', error);
+              Alert.alert(
+                'Error',
+                `No se pudo registrar la entrada de ${attendeeName}. ${error.message}`,
+                [{ text: 'OK' }]
+              );
+            }
           },
         },
       ]
