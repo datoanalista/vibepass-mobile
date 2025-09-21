@@ -72,6 +72,9 @@ class ApiService {
       const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}${endpoint}`, {
         method: 'GET',
         headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
           'Authorization': `Bearer ${token}`,
         },
       });
@@ -120,6 +123,9 @@ class ApiService {
       const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/redemptions/checkin`, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -164,6 +170,9 @@ class ApiService {
       const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/redemptions/redeem-products`, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -208,6 +217,9 @@ class ApiService {
       const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/redemptions/redeem-activities`, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -247,14 +259,29 @@ class ApiService {
 
       const response = await this.fetchWithTimeout(API_CONFIG.ENDPOINTS.AUTH_LOGIN, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
         body: JSON.stringify({ correoElectronico: email, password }),
       });
 
       console.log('📡 Response status:', response.status);
       console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
 
-      const data = await response.json();
-      console.log('📦 Response data:', data);
+      let data;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+        console.log('📦 Response data:', data);
+      } else {
+        // If not JSON, it's likely an HTML error page from ngrok
+        const htmlText = await response.text();
+        console.log('📦 Response (HTML):', htmlText.substring(0, 200) + '...');
+        throw new Error('Server returned HTML instead of JSON. Check ngrok configuration.');
+      }
 
       if (response.ok) {
         // Handle validator login response structure
