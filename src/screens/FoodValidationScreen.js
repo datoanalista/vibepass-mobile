@@ -108,6 +108,7 @@ const FoodValidationScreen = ({ navigation }) => {
   // Calculate summary using new backend fields
   const totalItems = foodItems.reduce((sum, item) => sum + (item.cantidadComprada || 0), 0);
   const redeemedItems = foodItems.reduce((sum, item) => sum + (item.cantidadCanjeada || 0), 0);
+  const totalProductsValue = foodItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
 
   return (
     <View style={styles.container}>
@@ -146,9 +147,9 @@ const FoodValidationScreen = ({ navigation }) => {
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal:</Text>
+              <Text style={styles.summaryLabel}>Total productos:</Text>
               <Text style={[styles.summaryValue, styles.totalValue]}>
-                ${qrData?.food?.subtotal?.toLocaleString() || '0'}
+                ${totalProductsValue.toLocaleString()}
               </Text>
             </View>
           </View>
