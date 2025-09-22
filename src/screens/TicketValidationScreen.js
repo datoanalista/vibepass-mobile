@@ -55,31 +55,6 @@ const TicketValidationScreen = ({ navigation }) => {
     );
   };
 
-  const handleMarkExited = (attendeeIndex, attendeeName) => {
-    Alert.alert(
-      'Marcar salida',
-      `¿Marcar salida de ${attendeeName}?`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Marcar salida',
-          style: 'destructive',
-          onPress: () => {
-            // This would mark as not entered (reverse the entry)
-            markAttendeeEntered(attendeeIndex, false);
-            Alert.alert(
-              'Salida registrada',
-              `${attendeeName} ha salido del evento.`,
-              [{ text: 'OK' }]
-            );
-          },
-        },
-      ]
-    );
-  };
 
   // Check if we have attendees or just ticket count
   const hasAttendees = qrData?.attendees && qrData.attendees.length > 0;
@@ -231,12 +206,11 @@ const TicketValidationScreen = ({ navigation }) => {
                         <Text style={styles.enterButtonText}>✅ Marcar entrada</Text>
                       </TouchableOpacity>
                     ) : (
-                      <TouchableOpacity 
-                        style={styles.exitButton}
-                        onPress={() => handleMarkExited(attendee.index, attendee.datosPersonales.nombreCompleto)}
-                      >
-                        <Text style={styles.exitButtonText}>❌ Marcar salida</Text>
-                      </TouchableOpacity>
+                      <View style={styles.alreadyEnteredContainer}>
+                        <Text style={styles.alreadyEnteredText}>
+                          ✅ Asistente ya ha ingresado al evento
+                        </Text>
+                      </View>
                     )}
                   </View>
                 </View>
@@ -466,19 +440,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  exitButton: {
-    backgroundColor: '#DC2626',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 150,
-  },
-  exitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -501,6 +462,19 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  alreadyEnteredContainer: {
+    backgroundColor: '#10B981',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  alreadyEnteredText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
