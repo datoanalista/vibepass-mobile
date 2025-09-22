@@ -24,6 +24,9 @@ export const QRProvider = ({ children }) => {
   const initializeValidationStates = (data) => {
     if (!data) return;
 
+    console.log('🔄 Initializing validation states with data:', data);
+    console.log('🎫 Attendance info:', data.attendance);
+
     const newStates = {
       tickets: {},
       food: {},
@@ -34,12 +37,17 @@ export const QRProvider = ({ children }) => {
     if (data.attendees) {
       // Full format with attendees
       data.attendees.forEach((attendee) => {
-        newStates.tickets[attendee.index] = false;
+        // Check if this attendee has already checked in
+        const hasCheckedIn = data.attendance?.checkedIn?.includes(attendee.index) || false;
+        newStates.tickets[attendee.index] = hasCheckedIn;
+        console.log(`👤 Attendee ${attendee.index} (${attendee.datosPersonales?.nombreCompleto}): checked in = ${hasCheckedIn}`);
       });
     } else if (data.tickets && typeof data.tickets === 'number') {
       // Simple format with just ticket count
       for (let i = 0; i < data.tickets; i++) {
-        newStates.tickets[i] = false;
+        const hasCheckedIn = data.attendance?.checkedIn?.includes(i) || false;
+        newStates.tickets[i] = hasCheckedIn;
+        console.log(`🎫 Ticket ${i}: checked in = ${hasCheckedIn}`);
       }
     }
 
@@ -128,10 +136,16 @@ export const QRProvider = ({ children }) => {
       const result = await ApiService.checkInAttendees(saleNumber, attendeeIndexes);
       
       if (result.success) {
+        console.log('✅ Check-in API successful, updating local state for indexes:', attendeeIndexes);
+        console.log('🔍 API result data:', result.data);
+        
         // Update local state to reflect the check-in
         attendeeIndexes.forEach(index => {
+          console.log(`📝 Marking attendee ${index} as entered locally`);
           markAttendeeEntered(index);
         });
+        
+        console.log('✅ Local state updated, current validation states:', validationStates);
         return result;
       } else {
         throw new Error(result.message || 'Check-in failed');

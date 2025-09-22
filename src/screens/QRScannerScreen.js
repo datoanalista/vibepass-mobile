@@ -68,11 +68,20 @@ const QRScannerScreen = ({ navigation }) => {
             };
             
             console.log('✅ Complete sale data retrieved:', completeData);
+            console.log('🔍 Attendance data from backend:', completeData.attendance);
+            if (completeData.attendees) {
+              console.log('👥 Attendees data:', completeData.attendees.map(a => ({ 
+                index: a.index, 
+                name: a.datosPersonales?.nombreCompleto,
+              })));
+            }
             console.log('🔍 QR Scanner - Data structure check:', {
               hasFood: !!completeData.food,
               foodItems: completeData.food?.items?.length || 0,
               hasActivities: !!completeData.activities,
               activitiesItems: completeData.activities?.items?.length || 0,
+              hasAttendance: !!completeData.attendance,
+              attendanceCheckedIn: completeData.attendance?.checkedIn || [],
               foodStructure: completeData.food,
               activitiesStructure: completeData.activities
             });
