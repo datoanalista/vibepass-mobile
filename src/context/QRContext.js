@@ -38,14 +38,35 @@ export const QRProvider = ({ children }) => {
       // Full format with attendees
       data.attendees.forEach((attendee) => {
         // Check if this attendee has already checked in
-        const hasCheckedIn = data.attendance?.checkedIn?.includes(attendee.index) || false;
+        // Backend might store checkedIn as array of indexes or array of objects
+        let hasCheckedIn = false;
+        if (data.attendance?.checkedIn) {
+          // Check if it's an array of numbers (indexes)
+          if (Array.isArray(data.attendance.checkedIn) && typeof data.attendance.checkedIn[0] === 'number') {
+            hasCheckedIn = data.attendance.checkedIn.includes(attendee.index);
+          }
+          // Check if it's an array of objects with index property
+          else if (Array.isArray(data.attendance.checkedIn) && typeof data.attendance.checkedIn[0] === 'object') {
+            hasCheckedIn = data.attendance.checkedIn.some(checkedIn => checkedIn.index === attendee.index);
+          }
+        }
         newStates.tickets[attendee.index] = hasCheckedIn;
         console.log(`👤 Attendee ${attendee.index} (${attendee.datosPersonales?.nombreCompleto}): checked in = ${hasCheckedIn}`);
       });
     } else if (data.tickets && typeof data.tickets === 'number') {
       // Simple format with just ticket count
       for (let i = 0; i < data.tickets; i++) {
-        const hasCheckedIn = data.attendance?.checkedIn?.includes(i) || false;
+        let hasCheckedIn = false;
+        if (data.attendance?.checkedIn) {
+          // Check if it's an array of numbers (indexes)
+          if (Array.isArray(data.attendance.checkedIn) && typeof data.attendance.checkedIn[0] === 'number') {
+            hasCheckedIn = data.attendance.checkedIn.includes(i);
+          }
+          // Check if it's an array of objects with index property
+          else if (Array.isArray(data.attendance.checkedIn) && typeof data.attendance.checkedIn[0] === 'object') {
+            hasCheckedIn = data.attendance.checkedIn.some(checkedIn => checkedIn.index === i);
+          }
+        }
         newStates.tickets[i] = hasCheckedIn;
         console.log(`🎫 Ticket ${i}: checked in = ${hasCheckedIn}`);
       }
@@ -138,12 +159,23 @@ export const QRProvider = ({ children }) => {
       if (result.success) {
         console.log('✅ Check-in API successful, updating local state for indexes:', attendeeIndexes);
         console.log('🔍 API result data:', result.data);
+        console.log('🔍 New check-ins:', result.data.newCheckIns);
+        console.log('🔍 Total checked in:', result.data.totalCheckedIn);
         
-        // Update local state to reflect the check-in
-        attendeeIndexes.forEach(index => {
-          console.log(`📝 Marking attendee ${index} as entered locally`);
-          markAttendeeEntered(index);
-        });
+        // Update local state based on the backend response
+        // Only mark as entered the attendees that were actually checked in (newCheckIns)
+        if (result.data.checkedInAttendees && Array.isArray(result.data.checkedInAttendees)) {
+          result.data.checkedInAttendees.forEach(checkedInData => {
+            console.log(`📝 Marking attendee ${checkedInData.index} as entered (from backend response)`);
+            markAttendeeEntered(checkedInData.index);
+          });
+        } else {
+          // Fallback: mark all requested indexes as entered
+          attendeeIndexes.forEach(index => {
+            console.log(`📝 Marking attendee ${index} as entered locally (fallback)`);
+            markAttendeeEntered(index);
+          });
+        }
         
         console.log('✅ Local state updated, current validation states:', validationStates);
         return result;
