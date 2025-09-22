@@ -164,17 +164,6 @@ const TicketValidationScreen = ({ navigation }) => {
                       <Text style={styles.attendeeName}>
                         {attendee.datosPersonales.nombreCompleto}
                       </Text>
-                      <View style={[
-                        styles.statusBadge, 
-                        hasEntered ? styles.enteredBadge : styles.pendingBadge
-                      ]}>
-                        <Text style={[
-                          styles.statusBadgeText,
-                          hasEntered ? styles.enteredBadgeText : styles.pendingBadgeText
-                        ]}>
-                          {hasEntered ? '✅ Ingresó' : '⏳ Pendiente'}
-                        </Text>
-                      </View>
                     </View>
                     
                     <View style={styles.attendeeDetails}>
@@ -369,37 +358,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   attendeeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 15,
   },
   attendeeName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#374151',
-    flex: 1,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  enteredBadge: {
-    backgroundColor: '#D1FAE5',
-  },
-  pendingBadge: {
-    backgroundColor: '#FEF3C7',
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  enteredBadgeText: {
-    color: '#065F46',
-  },
-  pendingBadgeText: {
-    color: '#92400E',
   },
   attendeeDetails: {
     backgroundColor: '#F9FAFB',
