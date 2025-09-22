@@ -107,6 +107,7 @@ const ActivityValidationScreen = ({ navigation }) => {
   // Calculate summary using new backend fields
   const totalItems = activityItems.reduce((sum, item) => sum + (item.cantidadComprada || 0), 0);
   const redeemedItems = activityItems.reduce((sum, item) => sum + (item.cantidadCanjeada || 0), 0);
+  const totalActivitiesValue = activityItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
 
   return (
     <View style={styles.container}>
@@ -145,9 +146,9 @@ const ActivityValidationScreen = ({ navigation }) => {
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal:</Text>
+              <Text style={styles.summaryLabel}>Total actividades:</Text>
               <Text style={[styles.summaryValue, styles.totalValue]}>
-                ${qrData?.activities?.subtotal?.toLocaleString() || '0'}
+                ${totalActivitiesValue.toLocaleString()}
               </Text>
             </View>
           </View>
