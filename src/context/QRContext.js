@@ -37,35 +37,18 @@ export const QRProvider = ({ children }) => {
     if (data.attendees) {
       // Full format with attendees
       data.attendees.forEach((attendee) => {
-        // Check if this attendee has already checked in
-        // Backend might store checkedIn as array of indexes or array of objects
-        let hasCheckedIn = false;
-        if (data.attendance?.checkedIn) {
-          // Check if it's an array of numbers (indexes)
-          if (Array.isArray(data.attendance.checkedIn) && typeof data.attendance.checkedIn[0] === 'number') {
-            hasCheckedIn = data.attendance.checkedIn.includes(attendee.index);
-          }
-          // Check if it's an array of objects with index property
-          else if (Array.isArray(data.attendance.checkedIn) && typeof data.attendance.checkedIn[0] === 'object') {
-            hasCheckedIn = data.attendance.checkedIn.some(checkedIn => checkedIn.index === attendee.index);
-          }
-        }
+        // NEW: Backend now provides isCheckedIn directly on each attendee
+        const hasCheckedIn = attendee.isCheckedIn || false;
         newStates.tickets[attendee.index] = hasCheckedIn;
-        console.log(`👤 Attendee ${attendee.index} (${attendee.datosPersonales?.nombreCompleto}): checked in = ${hasCheckedIn}`);
+        console.log(`👤 Attendee ${attendee.index} (${attendee.datosPersonales?.nombreCompleto}): checked in = ${hasCheckedIn}${hasCheckedIn ? ` at ${attendee.checkedInAt}` : ''}`);
       });
     } else if (data.tickets && typeof data.tickets === 'number') {
       // Simple format with just ticket count
       for (let i = 0; i < data.tickets; i++) {
         let hasCheckedIn = false;
-        if (data.attendance?.checkedIn) {
-          // Check if it's an array of numbers (indexes)
-          if (Array.isArray(data.attendance.checkedIn) && typeof data.attendance.checkedIn[0] === 'number') {
-            hasCheckedIn = data.attendance.checkedIn.includes(i);
-          }
-          // Check if it's an array of objects with index property
-          else if (Array.isArray(data.attendance.checkedIn) && typeof data.attendance.checkedIn[0] === 'object') {
-            hasCheckedIn = data.attendance.checkedIn.some(checkedIn => checkedIn.index === i);
-          }
+        // NEW: Backend now uses attendeeIndex in checkedIn array
+        if (data.attendance?.checkedIn && Array.isArray(data.attendance.checkedIn)) {
+          hasCheckedIn = data.attendance.checkedIn.some(checkedIn => checkedIn.attendeeIndex === i);
         }
         newStates.tickets[i] = hasCheckedIn;
         console.log(`🎫 Ticket ${i}: checked in = ${hasCheckedIn}`);
@@ -73,18 +56,22 @@ export const QRProvider = ({ children }) => {
     }
 
     // Initialize food validation states (remaining quantity)
-    // API returns 'products' instead of 'food.items'
+    // API returns 'products' with new cantidadDisponible field
     if (data.products && Array.isArray(data.products)) {
       data.products.forEach((item) => {
-        newStates.food[item.id] = item.cantidadComprada || item.cantidad || 0;
+        // NEW: Use cantidadDisponible from backend (cantidadComprada - cantidadCanjeada)
+        newStates.food[item.id] = item.cantidadDisponible || 0;
+        console.log(`🍽️ Product ${item.nombre}: ${item.cantidadDisponible} available (${item.cantidadComprada} bought, ${item.cantidadCanjeada} redeemed)`);
       });
     }
 
     // Initialize activity validation states (remaining quantity)
-    // API returns 'activities' as direct array, not activities.items
+    // API returns 'activities' with new cantidadDisponible field
     if (data.activities && Array.isArray(data.activities)) {
       data.activities.forEach((item) => {
-        newStates.activities[item.id] = item.cantidadComprada || item.cantidad || 0;
+        // NEW: Use cantidadDisponible from backend (cantidadComprada - cantidadCanjeada)
+        newStates.activities[item.id] = item.cantidadDisponible || 0;
+        console.log(`🎯 Activity ${item.nombreActividad}: ${item.cantidadDisponible} available (${item.cantidadComprada} bought, ${item.cantidadCanjeada} redeemed)`);
       });
     }
 

@@ -105,12 +105,9 @@ const FoodValidationScreen = ({ navigation }) => {
     );
   }
 
-  const totalItems = foodItems.reduce((sum, item) => sum + (item.cantidadComprada || item.cantidad || 0), 0);
-  const redeemedItems = foodItems.reduce((sum, item) => {
-    const remaining = validationStates.food[item.id] || 0;
-    const purchased = item.cantidadComprada || item.cantidad || 0;
-    return sum + (purchased - remaining);
-  }, 0);
+  // Calculate summary using new backend fields
+  const totalItems = foodItems.reduce((sum, item) => sum + (item.cantidadComprada || 0), 0);
+  const redeemedItems = foodItems.reduce((sum, item) => sum + (item.cantidadCanjeada || 0), 0);
 
   return (
     <View style={styles.container}>
@@ -161,9 +158,10 @@ const FoodValidationScreen = ({ navigation }) => {
             <Text style={styles.sectionTitle}>🍽️ Lista de Productos</Text>
             
             {foodItems.map((item) => {
-              const remainingQuantity = validationStates.food[item.id] || 0;
-              const purchasedQuantity = item.cantidadComprada || item.cantidad || 0;
-              const redeemedQuantity = purchasedQuantity - remainingQuantity;
+              // NEW: Use backend calculated fields instead of local state
+              const purchasedQuantity = item.cantidadComprada || 0;
+              const redeemedQuantity = item.cantidadCanjeada || 0;
+              const remainingQuantity = item.cantidadDisponible || 0;
               const isFullyRedeemed = remainingQuantity === 0;
               
               return (
