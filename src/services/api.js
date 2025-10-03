@@ -1,7 +1,7 @@
 // API Configuration for Ticketera Mobile App
 import StorageService from './storage';
 
-const API_BASE_URL = 'https://48a011d134ed.ngrok-free.app';
+const API_BASE_URL = 'https://65c7f7fea137.ngrok-free.app';
 
 const API_CONFIG = {
   BASE_URL: API_BASE_URL,
