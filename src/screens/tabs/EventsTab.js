@@ -131,9 +131,9 @@ const EventsTab = ({ navigation }) => {
     const endTime = event.informacionGeneral?.horaTermino;
     
     if (startTime && endTime) {
-      return `${date} desde ${formatTime(startTime)} a ${formatTime(endTime)} hrs`;
+      return `${date} de ${formatTime(startTime)} a ${formatTime(endTime)} hrs`;
     } else if (startTime) {
-      return `${date} desde ${formatTime(startTime)} hrs`;
+      return `${date} a las ${formatTime(startTime)} hrs`;
     } else {
       return date;
     }

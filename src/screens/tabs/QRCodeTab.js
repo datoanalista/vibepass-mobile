@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { CameraView, Camera } from 'expo-camera';
@@ -15,6 +16,7 @@ const QRCodeTab = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const { setQRData } = useQR();
 
   useEffect(() => {
@@ -93,13 +95,16 @@ const QRCodeTab = ({ navigation }) => {
       }, 1500); // Increased timeout to allow for API call
 
     } catch (error) {
-      console.error('❌ Error parsing QR code:', error);
+      console.log('⚠️ QR code not valid:', error.message);
       setLoading(false);
       
-      // Show error and allow scanning again
+      // Show elegant error modal instead of console error
+      setShowErrorModal(true);
+      
+      // Reset scanned state after showing modal
       setTimeout(() => {
         setScanned(false);
-      }, 2000);
+      }, 500);
     }
   };
 
@@ -200,6 +205,37 @@ const QRCodeTab = ({ navigation }) => {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.errorModal}>
+            <View style={styles.errorIconContainer}>
+              <Text style={styles.errorIcon}>⚠️</Text>
+            </View>
+            <Text style={styles.errorTitle}>Código QR no válido</Text>
+            <Text style={styles.errorMessage}>
+              El código QR escaneado no es válido o no contiene la información correcta.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.scanAgainButton]}
+                onPress={() => {
+                  setShowErrorModal(false);
+                  setScanned(false);
+                }}
+              >
+                <Text style={styles.scanAgainButtonText}>Escanear de nuevo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -379,6 +415,61 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Error Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    maxWidth: 320,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  errorIconContainer: {
+    marginBottom: 20,
+  },
+  errorIcon: {
+    fontSize: 48,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 30,
+  },
+  modalButtons: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: 'center',
+    minWidth: 160,
   },
 });
 

@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import StorageService from '../../services/storage';
@@ -103,13 +104,13 @@ const HomeTab = ({ navigation }) => {
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.welcomeTitle}>¡Bienvenido!</Text>
-            <Text style={styles.userName}>
-              {userData?.validator?.nombre || 'Validador'}
-            </Text>
-            <Text style={styles.userType}>
-              {userData?.validator?.rol || 'Validador'}
-            </Text>
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../../../assets/vibepass_logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
           </View>
 
           {/* Validator Info */}
@@ -197,25 +198,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
   },
-  welcomeTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 10,
   },
-  userName: {
-    fontSize: 20,
-    color: '#E5E7EB',
-    marginBottom: 5,
-  },
-  userType: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    backgroundColor: 'rgba(46, 124, 228, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    overflow: 'hidden',
+  logo: {
+    width: 200,
+    height: 80,
   },
   // Validator Info Card
   validatorInfoCard: {
