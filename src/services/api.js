@@ -1,7 +1,7 @@
 // API Configuration for Ticketera Mobile App
 import StorageService from './storage';
 
-const API_BASE_URL = 'https://65c7f7fea137.ngrok-free.app';
+const API_BASE_URL = 'https://90b1799f1edc.ngrok-free.app';
 
 const API_CONFIG = {
   BASE_URL: API_BASE_URL,
@@ -251,6 +251,49 @@ class ApiService {
     }
   }
 
+  // Get validator events
+  async getValidatorEvents() {
+    try {
+      console.log('🎫 Fetching validator events');
+      
+      const token = await StorageService.getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/users/events`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log('📡 Validator events response status:', response.status);
+      const data = await response.json();
+      console.log('📦 Validator events data:', data);
+
+      if (response.ok) {
+        if (data.status === 'success' && data.data) {
+          return {
+            success: true,
+            data: data.data,
+            message: data.message || 'Events retrieved successfully'
+          };
+        } else {
+          throw new Error(data.message || 'Failed to get validator events');
+        }
+      } else {
+        throw new Error(data.message || `HTTP Error ${response.status}`);
+      }
+    } catch (error) {
+      console.error('❌ Validator events error:', error);
+      throw new Error(error.message || 'Failed to get validator events');
+    }
+  }
+
   // Login method
   async login(email, password) {
     try {
@@ -284,11 +327,16 @@ class ApiService {
       }
 
       if (response.ok) {
-        // Handle validator login response structure
+        // Handle validator login response structure with new format
         if (data.status === 'success' && data.data) {
           return {
             success: true,
-            data: data.data,
+            data: {
+              validator: data.data.validator,
+              eventos: data.data.eventos,
+              permisos: data.data.permisos,
+              totalEventos: data.data.totalEventos
+            },
             token: data.data.token,
             message: data.message || 'Login successful'
           };

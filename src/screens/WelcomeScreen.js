@@ -217,19 +217,19 @@ const WelcomeScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* QR Scanner Button */}
+          {/* Events List Button */}
           <View style={styles.scannerButtonContainer}>
             <TouchableOpacity 
               style={styles.scannerButton}
-              onPress={() => navigation.navigate('QRScanner')}
+              onPress={() => navigation.navigate('EventsList')}
             >
               <View style={styles.scannerButtonIcon}>
-                <Text style={styles.scannerButtonIconText}>📱</Text>
+                <Text style={styles.scannerButtonIconText}>🎫</Text>
               </View>
               <View style={styles.scannerButtonContent}>
-                <Text style={styles.scannerButtonTitle}>Escanear Código QR</Text>
+                <Text style={styles.scannerButtonTitle}>Ver Mis Eventos</Text>
                 <Text style={styles.scannerButtonDescription}>
-                  Validar entradas, alimentos y actividades
+                  Seleccionar evento para validar entradas
                 </Text>
               </View>
               <Text style={styles.scannerButtonArrow}>→</Text>

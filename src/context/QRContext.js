@@ -7,6 +7,7 @@ const QRContext = createContext();
 // QR Provider Component
 export const QRProvider = ({ children }) => {
   const [qrData, setQrData] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [validationStates, setValidationStates] = useState({
     tickets: {},     // { attendeeIndex: boolean }
     food: {},        // { itemId: remainingQuantity }
@@ -16,8 +17,17 @@ export const QRProvider = ({ children }) => {
   // Set QR data from scanner
   const setQRData = (data) => {
     setQrData(data);
+    // Store selected event if present
+    if (data.selectedEvent) {
+      setSelectedEvent(data.selectedEvent);
+    }
     // Initialize validation states based on QR data
     initializeValidationStates(data);
+  };
+
+  // Set selected event
+  const setSelectedEventData = (event) => {
+    setSelectedEvent(event);
   };
 
   // Initialize validation states when QR is scanned
@@ -124,6 +134,7 @@ export const QRProvider = ({ children }) => {
   // Clear QR data
   const clearQRData = () => {
     setQrData(null);
+    setSelectedEvent(null);
     setValidationStates({
       tickets: {},
       food: {},
@@ -253,8 +264,10 @@ export const QRProvider = ({ children }) => {
 
   const value = {
     qrData,
+    selectedEvent,
     validationStates,
     setQRData,
+    setSelectedEventData,
     markAttendeeEntered,
     redeemFoodItem,
     redeemActivityItem,

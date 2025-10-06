@@ -2,24 +2,20 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  Alert,
   TouchableOpacity,
+  StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { CameraView, Camera } from 'expo-camera';
-import { useQR } from '../context/QRContext';
-import ApiService from '../services/api';
+import { useQR } from '../../context/QRContext';
+import ApiService from '../../services/api';
 
-const QRScannerScreen = ({ navigation, route }) => {
+const QRCodeTab = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
   const { setQRData } = useQR();
-  
-  // Get selected event from navigation params
-  const selectedEvent = route?.params?.selectedEvent;
 
   useEffect(() => {
     getBarCodeScannerPermissions();
@@ -46,22 +42,6 @@ const QRScannerScreen = ({ navigation, route }) => {
       if (!qrData.saleId && !qrData.saleNumber && !qrData.eventoId && !qrData._id) {
         throw new Error('QR inválido - No contiene ID de venta válido');
       }
-      
-      // Check if it has basic event info or if we have a selected event
-      if (!qrData.evento && !qrData.event && !selectedEvent) {
-        throw new Error('QR inválido - No contiene información del evento');
-      }
-      
-      // If we have a selected event, add it to the QR data
-      if (selectedEvent && (!qrData.evento && !qrData.event)) {
-        qrData.evento = selectedEvent.informacionGeneral?.nombreEvento;
-        qrData.event = {
-          nombre: selectedEvent.informacionGeneral?.nombreEvento,
-          fecha: selectedEvent.informacionGeneral?.fechaEvento,
-          lugar: selectedEvent.informacionGeneral?.lugarEvento
-        };
-        qrData.selectedEvent = selectedEvent;
-      }
 
       // Check if this is a simple QR that needs additional data
       if ((qrData.saleId || qrData.saleNumber) && !qrData.attendees) {
@@ -82,23 +62,6 @@ const QRScannerScreen = ({ navigation, route }) => {
             };
             
             console.log('✅ Complete sale data retrieved:', completeData);
-            console.log('🔍 Attendance data from backend:', completeData.attendance);
-            if (completeData.attendees) {
-              console.log('👥 Attendees data:', completeData.attendees.map(a => ({ 
-                index: a.index, 
-                name: a.datosPersonales?.nombreCompleto,
-              })));
-            }
-            console.log('🔍 QR Scanner - Data structure check:', {
-              hasFood: !!completeData.food,
-              foodItems: completeData.food?.items?.length || 0,
-              hasActivities: !!completeData.activities,
-              activitiesItems: completeData.activities?.items?.length || 0,
-              hasAttendance: !!completeData.attendance,
-              attendanceCheckedIn: completeData.attendance?.checkedIn || [],
-              foodStructure: completeData.food,
-              activitiesStructure: completeData.activities
-            });
             setQRData(completeData);
           } else {
             // If we can't get complete data, use the simple format
@@ -133,25 +96,11 @@ const QRScannerScreen = ({ navigation, route }) => {
       console.error('❌ Error parsing QR code:', error);
       setLoading(false);
       
-      Alert.alert(
-        'Error de QR',
-        'El código QR no es válido o no contiene la información correcta.',
-        [
-          {
-            text: 'Escanear de nuevo',
-            onPress: () => setScanned(false)
-          },
-          {
-            text: 'Volver',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      // Show error and allow scanning again
+      setTimeout(() => {
+        setScanned(false);
+      }, 2000);
     }
-  };
-
-  const handleGoBack = () => {
-    navigation.goBack();
   };
 
   if (hasPermission === null) {
@@ -178,8 +127,8 @@ const QRScannerScreen = ({ navigation, route }) => {
               Para escanear códigos QR, necesitas permitir el acceso a la cámara en la configuración de la aplicación.
             </Text>
             
-            <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-              <Text style={styles.backButtonText}>Volver</Text>
+            <TouchableOpacity style={styles.backButton} onPress={getBarCodeScannerPermissions}>
+              <Text style={styles.backButtonText}>Intentar de nuevo</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -193,18 +142,9 @@ const QRScannerScreen = ({ navigation, route }) => {
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButtonHeader} onPress={handleGoBack}>
-          <Text style={styles.backButtonIcon}>←</Text>
-        </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Escanea Código QR</Text>
-          {selectedEvent ? (
-            <Text style={styles.headerSubtitle}>
-              {selectedEvent.informacionGeneral?.nombreEvento || 'Evento seleccionado'}
-            </Text>
-          ) : (
-            <Text style={styles.headerSubtitle}>Coloca la cámara frente al código QR</Text>
-          )}
+          <Text style={styles.headerTitle}>Escáner QR</Text>
+          <Text style={styles.headerSubtitle}>Coloca la cámara frente al código QR</Text>
         </View>
       </View>
 
@@ -319,20 +259,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     backgroundColor: '#1B2735',
-  },
-  backButtonHeader: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  backButtonIcon: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   headerContent: {
     flex: 1,
@@ -455,4 +381,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default QRScannerScreen;
+export default QRCodeTab;

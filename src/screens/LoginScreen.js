@@ -5,13 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import Toast from 'react-native-toast-message';
 import ApiService from '../services/api';
 import StorageService from '../services/storage';
 
@@ -30,8 +30,8 @@ const LoginScreen = ({ navigation }) => {
     try {
       const isLoggedIn = await StorageService.isLoggedIn();
       if (isLoggedIn) {
-        console.log('✅ User already logged in, navigating to Welcome');
-        navigation.replace('Welcome');
+        console.log('✅ User already logged in, navigating to MainTabs');
+        navigation.replace('MainTabs');
       }
     } catch (error) {
       console.error('❌ Error checking login status:', error);
@@ -40,7 +40,12 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor ingrese email y contraseña');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Por favor ingrese email y contraseña',
+        visibilityTime: 3000,
+      });
       return;
     }
 
@@ -65,25 +70,24 @@ const LoginScreen = ({ navigation }) => {
         
         await StorageService.saveRememberMe(rememberMe);
         
-        Alert.alert(
-          'Éxito', 
-          'Inicio de sesión exitoso',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.replace('Welcome')
-            }
-          ]
-        );
+        // Navigate directly to tabs without alert
+        navigation.replace('MainTabs');
       } else {
-        Alert.alert('Error', result.message || 'Error en el inicio de sesión');
+        Toast.show({
+          type: 'error',
+          text1: 'Error de Conexión',
+          text2: 'En estos momentos no se puede acceder al sistema, por favor inténtalo más tarde.',
+          visibilityTime: 5000,
+        });
       }
     } catch (error) {
       console.error('❌ Login error:', error);
-      Alert.alert(
-        'Error de Conexión', 
-        error.message || 'No se pudo conectar con el servidor. Verifique su conexión a internet.'
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Error de Conexión',
+        text2: 'En estos momentos no se puede acceder al sistema, por favor inténtalo más tarde.',
+        visibilityTime: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -177,6 +181,7 @@ const LoginScreen = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+      <Toast />
     </KeyboardAvoidingView>
   );
 };
