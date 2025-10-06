@@ -63,10 +63,6 @@ const HomeTab = ({ navigation }) => {
     );
   };
 
-  const handleEventPress = (event) => {
-    // Navigate directly to QR Scanner with event context
-    navigation.navigate('QRScanner', { selectedEvent: event });
-  };
 
   // Format date function
   const formatDate = (dateString) => {
@@ -151,67 +147,15 @@ const HomeTab = ({ navigation }) => {
             </View>
           )}
 
-          {/* Events List */}
-          {userData?.eventos && userData.eventos.length > 0 && (
-            <View style={styles.eventsContainer}>
-              <Text style={styles.eventsTitle}>
-                🎫 Mis Eventos ({userData.eventos.length})
-              </Text>
-              
-              {userData.eventos.map((event, index) => (
-                <TouchableOpacity
-                  key={event.id || index}
-                  style={styles.eventCard}
-                  onPress={() => handleEventPress(event)}
-                >
-                  <View style={styles.eventContent}>
-                    <Text style={styles.eventName}>
-                      {event.informacionGeneral?.nombreEvento || 'Sin nombre'}
-                    </Text>
-                    
-                    <View style={styles.eventDetails}>
-                      <View style={styles.eventDetailRow}>
-                        <Text style={styles.eventDetailIcon}>📅</Text>
-                        <Text style={styles.eventDetailText}>
-                          {formatDate(event.informacionGeneral?.fechaEvento)}
-                        </Text>
-                      </View>
-                      
-                      <View style={styles.eventDetailRow}>
-                        <Text style={styles.eventDetailIcon}>📍</Text>
-                        <Text style={styles.eventDetailText}>
-                          {event.informacionGeneral?.lugarEvento || 'Lugar no especificado'}
-                        </Text>
-                      </View>
-                      
-                      <View style={styles.eventDetailRow}>
-                        <Text style={styles.eventDetailIcon}>📊</Text>
-                        <Text style={styles.eventDetailText}>
-                          Estado: {event.informacionGeneral?.estado || 'No especificado'}
-                        </Text>
-                      </View>
-                    </View>
-                    
-                    <View style={styles.eventFooter}>
-                      <Text style={styles.tapToValidate}>Toca para validar entradas</Text>
-                      <Text style={styles.arrowIcon}>→</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {/* No events message */}
-          {(!userData?.eventos || userData.eventos.length === 0) && (
-            <View style={styles.noEventsContainer}>
-              <Text style={styles.noEventsIcon}>📭</Text>
-              <Text style={styles.noEventsTitle}>No hay eventos asignados</Text>
-              <Text style={styles.noEventsDescription}>
-                No tienes eventos asignados en este momento. Contacta al administrador para obtener acceso a eventos.
-              </Text>
-            </View>
-          )}
+          {/* Events Link */}
+          <View style={styles.eventsLinkContainer}>
+            <TouchableOpacity 
+              style={styles.eventsLink} 
+              onPress={() => navigation.navigate('Events')}
+            >
+              <Text style={styles.eventsLinkText}>Ir a Eventos asignados</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Logout Button */}
           <View style={styles.logoutContainer}>
@@ -319,111 +263,33 @@ const styles = StyleSheet.create({
     color: '#10B981',
     fontWeight: '600',
   },
-  // Events Container
-  eventsContainer: {
-    marginBottom: 20,
+  eventsLinkContainer: {
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingBottom: 10,
   },
-  eventsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  eventsLink: {
+    backgroundColor: '#2E7CE4',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  eventsLinkText: {
     color: '#FFFFFF',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  eventCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  eventContent: {
-    padding: 20,
-  },
-  eventName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1B2735',
-    marginBottom: 12,
-  },
-  eventDetails: {
-    marginBottom: 15,
-  },
-  eventDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  eventDetailIcon: {
     fontSize: 16,
-    marginRight: 10,
-    width: 20,
-  },
-  eventDetailText: {
-    fontSize: 14,
-    color: '#374151',
-    flex: 1,
-  },
-  eventFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  tapToValidate: {
-    fontSize: 14,
-    color: '#059669',
-    fontWeight: '600',
-  },
-  arrowIcon: {
-    fontSize: 18,
-    color: '#059669',
     fontWeight: 'bold',
-  },
-  noEventsContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 15,
-    padding: 40,
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  noEventsIcon: {
-    fontSize: 48,
-    marginBottom: 15,
-  },
-  noEventsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#374151',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  noEventsDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
   },
   logoutContainer: {
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 10,
   },
   logoutButton: {
     backgroundColor: '#EF4444',

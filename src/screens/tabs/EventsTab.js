@@ -56,13 +56,24 @@ const EventsTab = ({ navigation }) => {
 
   const getStatusDisplayName = (status) => {
     const statusMap = {
+      'programado': 'Programado',
+      'en_curso': 'En Curso',
+      'finalizado': 'Finalizado',
+      'cancelado': 'Cancelado',
+      'sin_estado': 'Sin Estado'
+    };
+    return statusMap[status] || status;
+  };
+
+  const getStatusGroupName = (status) => {
+    const groupMap = {
       'programado': 'Programados',
       'en_curso': 'En Curso',
       'finalizado': 'Finalizados',
       'cancelado': 'Cancelados',
       'sin_estado': 'Sin Estado'
     };
-    return statusMap[status] || status;
+    return groupMap[status] || status;
   };
 
   const getStatusColor = (status) => {
@@ -101,6 +112,33 @@ const EventsTab = ({ navigation }) => {
     }
   };
 
+  // Format time function
+  const formatTime = (timeString) => {
+    if (!timeString) return null;
+    
+    try {
+      const [hours, minutes] = timeString.split(':');
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Format date with time range
+  const formatDateTimeRange = (event) => {
+    const date = formatDate(event.informacionGeneral?.fechaEvento);
+    const startTime = event.informacionGeneral?.horaInicio;
+    const endTime = event.informacionGeneral?.horaTermino;
+    
+    if (startTime && endTime) {
+      return `${date} desde ${formatTime(startTime)} a ${formatTime(endTime)} hrs`;
+    } else if (startTime) {
+      return `${date} desde ${formatTime(startTime)} hrs`;
+    } else {
+      return date;
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -132,7 +170,7 @@ const EventsTab = ({ navigation }) => {
                 <View key={status} style={styles.statusGroup}>
                   <View style={styles.statusHeader}>
                     <Text style={[styles.statusTitle, { color: getStatusColor(status) }]}>
-                      {getStatusDisplayName(status)}
+                      {getStatusGroupName(status)}
                     </Text>
                     <Text style={styles.statusCount}>
                       {events.length} evento{events.length !== 1 ? 's' : ''}
@@ -163,7 +201,7 @@ const EventsTab = ({ navigation }) => {
                           <View style={styles.eventDetailRow}>
                             <Text style={styles.eventDetailIcon}>📅</Text>
                             <Text style={styles.eventDetailText}>
-                              {formatDate(event.informacionGeneral?.fechaEvento)}
+                              {formatDateTimeRange(event)}
                             </Text>
                           </View>
                           

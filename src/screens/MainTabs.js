@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { Text, Image } from 'react-native';
 
 // Import tab screens
 import HomeTab from './tabs/HomeTab';
@@ -25,8 +25,12 @@ const MainTabs = () => {
         tabBarActiveTintColor: '#2E7CE4',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
+          fontFamily: 'Inter',
+          fontSize: 13,
+          fontWeight: '400',
+          lineHeight: 13,
+          letterSpacing: 0,
+          color: '#FFFFFF',
           marginTop: 4,
         },
       }}
@@ -37,7 +41,15 @@ const MainTabs = () => {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>🏠</Text>
+            <Image
+              source={require('../../assets/TAB_home.png')}
+              style={{
+                width: size,
+                height: size,
+                tintColor: color,
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -47,7 +59,15 @@ const MainTabs = () => {
         options={{
           tabBarLabel: 'Eventos',
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>🎫</Text>
+            <Image
+              source={require('../../assets/TAB_eventos.png')}
+              style={{
+                width: size,
+                height: size,
+                tintColor: color,
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -57,7 +77,15 @@ const MainTabs = () => {
         options={{
           tabBarLabel: 'Código QR',
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>📱</Text>
+            <Image
+              source={require('../../assets/TAB_codigo_qr.png')}
+              style={{
+                width: size,
+                height: size,
+                tintColor: color,
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
