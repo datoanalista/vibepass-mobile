@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 100, // Extra padding to account for fixed tab bar
   },
   header: {
     alignItems: 'center',

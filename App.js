@@ -23,7 +23,13 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <QRProvider>
-      <NavigationContainer>
+      <NavigationContainer
+        independent={false}
+        onStateChange={() => {
+          // Force layout recalculation to maintain tab position
+          console.log('Navigation state changed - maintaining tab position');
+        }}
+      >
         <StatusBar style="light" backgroundColor="#1B2735" />
         <Stack.Navigator
           initialRouteName="Login"

@@ -349,6 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1B2735',
     paddingHorizontal: 20,
     paddingVertical: 30,
+    paddingBottom: 100, // Extra padding to account for fixed tab bar
     alignItems: 'center',
   },
   instructionText: {
