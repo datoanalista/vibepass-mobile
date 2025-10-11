@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,16 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Modal,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useQR } from '../context/QRContext';
 
 const ActivityValidationScreen = ({ navigation }) => {
   const { qrData, validationStates, redeemActivityItem, redeemActivitiesAPI } = useQR();
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [showQuantityModal, setShowQuantityModal] = useState(false);
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -20,8 +24,8 @@ const ActivityValidationScreen = ({ navigation }) => {
   // API returns activities as direct array, not activities.items
   const activityItems = qrData?.activities || [];
 
-  const handleRedeemItem = async (item, quantity = 1) => {
-    const remainingQuantity = validationStates.activities[item.id] || 0;
+  const handleQuantitySelector = (item) => {
+    const remainingQuantity = item.cantidadDisponible || 0;
     
     if (remainingQuantity <= 0) {
       Alert.alert(
@@ -32,11 +36,17 @@ const ActivityValidationScreen = ({ navigation }) => {
       return;
     }
 
-    const actualQuantity = Math.min(quantity, remainingQuantity);
+    setSelectedItem(item);
+    setSelectedQuantity(1);
+    setShowQuantityModal(true);
+  };
+
+  const handleConfirmRedeem = async () => {
+    if (!selectedItem || selectedQuantity <= 0) return;
 
     Alert.alert(
       'Confirmar canje',
-      `¿Confirmar canje de ${actualQuantity} cupo${actualQuantity !== 1 ? 's' : ''} para ${item.nombreActividad}?`,
+      `¿Confirmar canje de ${selectedQuantity} cupo${selectedQuantity !== 1 ? 's' : ''} para ${selectedItem.nombreActividad}?`,
       [
         {
           text: 'Cancelar',
@@ -47,24 +57,29 @@ const ActivityValidationScreen = ({ navigation }) => {
           style: 'default',
           onPress: async () => {
             try {
-              console.log('🎯 Redeeming activity via API:', { itemId: item.id, cantidad: actualQuantity });
+              console.log('🎯 Redeeming activity via API:', { itemId: selectedItem.id, cantidad: selectedQuantity });
               
               // Call API to redeem activity
               await redeemActivitiesAPI([{
-                itemId: item.id,
-                cantidad: actualQuantity
+                itemId: selectedItem.id,
+                cantidad: selectedQuantity
               }]);
               
               Alert.alert(
                 'Canje exitoso',
-                `Se han canjeado ${actualQuantity} cupo${actualQuantity !== 1 ? 's' : ''} para ${item.nombreActividad}.`,
+                `Se han canjeado ${selectedQuantity} cupo${selectedQuantity !== 1 ? 's' : ''} para ${selectedItem.nombreActividad}.`,
                 [{ text: 'OK' }]
               );
+              
+              // Close modal
+              setShowQuantityModal(false);
+              setSelectedItem(null);
+              setSelectedQuantity(1);
             } catch (error) {
               console.error('❌ Error redeeming activity:', error);
               Alert.alert(
                 'Error',
-                `No se pudo canjear ${item.nombreActividad}. ${error.message}`,
+                `No se pudo canjear ${selectedItem.nombreActividad}. ${error.message}`,
                 [{ text: 'OK' }]
               );
             }
@@ -74,9 +89,12 @@ const ActivityValidationScreen = ({ navigation }) => {
     );
   };
 
-  const handleRedeemAll = (item) => {
-    const remainingQuantity = validationStates.activities[item.id] || 0;
-    handleRedeemItem(item, remainingQuantity);
+  const generateQuantityOptions = (maxQuantity) => {
+    const options = [];
+    for (let i = 1; i <= maxQuantity; i++) {
+      options.push(i);
+    }
+    return options;
   };
 
   if (activityItems.length === 0) {
@@ -214,25 +232,15 @@ const ActivityValidationScreen = ({ navigation }) => {
 
                   {remainingQuantity > 0 && (
                     <View style={styles.itemActions}>
-                      <View style={styles.actionButtons}>
-                        <TouchableOpacity 
-                          style={styles.redeemOneButton}
-                          onPress={() => handleRedeemItem(item, 1)}
-                        >
-                          <Text style={styles.redeemOneButtonText}>Canjear 1 cupo</Text>
-                        </TouchableOpacity>
-                        
-                        {remainingQuantity > 1 && (
-                          <TouchableOpacity 
-                            style={styles.redeemAllButton}
-                            onPress={() => handleRedeemAll(item)}
-                          >
-                            <Text style={styles.redeemAllButtonText}>
-                              Canjear todos ({remainingQuantity})
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
+                      <TouchableOpacity 
+                        style={styles.quantitySelectorButton}
+                        onPress={() => handleQuantitySelector(item)}
+                      >
+                        <View style={styles.quantitySelectorContent}>
+                          <Text style={styles.quantitySelectorText}>Seleccionar cantidad</Text>
+                          <Text style={styles.quantitySelectorIcon}>▼</Text>
+                        </View>
+                      </TouchableOpacity>
                     </View>
                   )}
 
@@ -249,6 +257,64 @@ const ActivityValidationScreen = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Quantity Selection Modal */}
+      <Modal
+        visible={showQuantityModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowQuantityModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Seleccionar Cantidad</Text>
+            <Text style={styles.modalSubtitle}>
+              {selectedItem?.nombreActividad} - Máximo: {selectedItem?.cantidadDisponible || 0}
+            </Text>
+            
+            <View style={styles.quantityOptionsContainer}>
+              <ScrollView style={styles.quantityScrollView} showsVerticalScrollIndicator={false}>
+                {selectedItem && generateQuantityOptions(selectedItem.cantidadDisponible || 0).map((quantity) => (
+                  <TouchableOpacity
+                    key={quantity}
+                    style={[
+                      styles.quantityOption,
+                      selectedQuantity === quantity && styles.selectedQuantityOption
+                    ]}
+                    onPress={() => setSelectedQuantity(quantity)}
+                  >
+                    <Text style={[
+                      styles.quantityOptionText,
+                      selectedQuantity === quantity && styles.selectedQuantityOptionText
+                    ]}>
+                      {quantity} cupo{quantity !== 1 ? 's' : ''}
+                    </Text>
+                    {selectedQuantity === quantity && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setShowQuantityModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.redeemButton}
+                onPress={handleConfirmRedeem}
+              >
+                <Text style={styles.redeemButtonText}>Canjear</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -449,33 +515,117 @@ const styles = StyleSheet.create({
   itemActions: {
     alignItems: 'center',
   },
-  actionButtons: {
+  quantitySelectorButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    minWidth: 200,
+  },
+  quantitySelectorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  quantitySelectorText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  quantitySelectorIcon: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    marginLeft: 8,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    margin: 20,
+    maxHeight: '80%',
+    minWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#374151',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  quantityOptionsContainer: {
+    maxHeight: 300,
+    marginBottom: 20,
+  },
+  quantityScrollView: {
+    maxHeight: 250,
+  },
+  quantityOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginBottom: 5,
+    backgroundColor: '#F9FAFB',
+  },
+  selectedQuantityOption: {
+    backgroundColor: '#3B82F6',
+  },
+  quantityOptionText: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  selectedQuantityOptionText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalActions: {
     flexDirection: 'row',
     gap: 10,
   },
-  redeemOneButton: {
-    backgroundColor: '#8B5CF6',
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#6B7280',
     borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
-  redeemOneButtonText: {
+  cancelButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
-  redeemAllButton: {
-    backgroundColor: '#7C3AED',
+  redeemButton: {
+    flex: 1,
+    backgroundColor: '#059669',
     borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
-  redeemAllButtonText: {
+  redeemButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
   completedMessage: {
     backgroundColor: '#EDE9FE',

@@ -220,11 +220,33 @@ export const QRProvider = ({ children }) => {
         // Refresh QR data from backend to get updated quantities
         try {
           const updatedSaleDetails = await ApiService.getSaleDetails(saleNumber);
-          if (updatedSaleDetails) {
+          if (updatedSaleDetails && updatedSaleDetails.data) {
             console.log('✅ QR data refreshed after product redemption');
-            setQrData(updatedSaleDetails);
+            
+            // Preserve original QR structure and merge with updated data
+            const updatedQRData = {
+              ...qrData, // Preserve original structure
+              ...updatedSaleDetails.data, // Update with fresh data from backend
+              products: updatedSaleDetails.data.products, // Ensure products array is updated
+              activities: updatedSaleDetails.data.activities, // Ensure activities array is updated
+              attendees: updatedSaleDetails.data.attendees, // Ensure attendees array is updated
+              attendance: updatedSaleDetails.data.attendance, // Ensure attendance is updated
+            };
+            
+            console.log('🔄 Updated QR data structure:', {
+              hasProducts: !!updatedQRData.products,
+              productsCount: updatedQRData.products?.length || 0,
+              hasActivities: !!updatedQRData.activities,
+              activitiesCount: updatedQRData.activities?.length || 0,
+              hasAttendees: !!updatedQRData.attendees,
+              attendeesCount: updatedQRData.attendees?.length || 0,
+              hasOriginalQR: !!updatedQRData.originalQR,
+              hasEvento: !!updatedQRData.evento
+            });
+            
+            setQrData(updatedQRData);
             // Re-initialize validation states with updated data
-            initializeValidationStates(updatedSaleDetails);
+            initializeValidationStates(updatedQRData);
           }
         } catch (refreshError) {
           console.error('⚠️ Failed to refresh QR data, using local update:', refreshError);
@@ -260,11 +282,33 @@ export const QRProvider = ({ children }) => {
         // Refresh QR data from backend to get updated quantities
         try {
           const updatedSaleDetails = await ApiService.getSaleDetails(saleNumber);
-          if (updatedSaleDetails) {
+          if (updatedSaleDetails && updatedSaleDetails.data) {
             console.log('✅ QR data refreshed after activity redemption');
-            setQrData(updatedSaleDetails);
+            
+            // Preserve original QR structure and merge with updated data
+            const updatedQRData = {
+              ...qrData, // Preserve original structure
+              ...updatedSaleDetails.data, // Update with fresh data from backend
+              products: updatedSaleDetails.data.products, // Ensure products array is updated
+              activities: updatedSaleDetails.data.activities, // Ensure activities array is updated
+              attendees: updatedSaleDetails.data.attendees, // Ensure attendees array is updated
+              attendance: updatedSaleDetails.data.attendance, // Ensure attendance is updated
+            };
+            
+            console.log('🔄 Updated QR data structure:', {
+              hasProducts: !!updatedQRData.products,
+              productsCount: updatedQRData.products?.length || 0,
+              hasActivities: !!updatedQRData.activities,
+              activitiesCount: updatedQRData.activities?.length || 0,
+              hasAttendees: !!updatedQRData.attendees,
+              attendeesCount: updatedQRData.attendees?.length || 0,
+              hasOriginalQR: !!updatedQRData.originalQR,
+              hasEvento: !!updatedQRData.evento
+            });
+            
+            setQrData(updatedQRData);
             // Re-initialize validation states with updated data
-            initializeValidationStates(updatedSaleDetails);
+            initializeValidationStates(updatedQRData);
           }
         } catch (refreshError) {
           console.error('⚠️ Failed to refresh QR data, using local update:', refreshError);
