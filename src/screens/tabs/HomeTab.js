@@ -14,23 +14,56 @@ import StorageService from '../../services/storage';
 
 const HomeTab = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadUserData();
   }, []);
 
+  // Reload data when returning from event selection
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadUserData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
   const loadUserData = async () => {
     try {
       const user = await StorageService.getUserData();
+      const eventId = await StorageService.getSelectedEvent();
+      
       if (user) {
         setUserData(user);
+        setSelectedEventId(eventId);
+        
+        // Find the selected event details
+        if (eventId && user.eventos) {
+          const event = user.eventos.find(e => e.id === eventId);
+          setSelectedEvent(event);
+        }
+        
         console.log('✅ User data loaded:', user);
+        console.log('🎪 Selected event ID:', eventId);
       }
     } catch (error) {
       console.error('❌ Error loading user data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChangeEvent = () => {
+    if (userData?.eventos && userData.eventos.length > 1) {
+      navigation.navigate('EventSelection', { 
+        eventos: userData.eventos,
+        returnToHome: true 
+      });
+    } else {
+      Alert.alert('Información', 'Solo tiene un evento asignado');
     }
   };
 
@@ -112,6 +145,54 @@ const HomeTab = ({ navigation }) => {
               />
             </View>
           </View>
+
+          {/* Current Event Info */}
+          {selectedEvent && (
+            <View style={styles.currentEventCard}>
+              <Text style={styles.currentEventTitle}>🎪 Evento Activo</Text>
+              
+              <View style={styles.currentEventInfoRow}>
+                <Text style={styles.currentEventInfoLabel}>Evento:</Text>
+                <Text style={styles.currentEventInfoValue}>
+                  {selectedEvent.informacionGeneral?.nombreEvento || 'Sin nombre'}
+                </Text>
+              </View>
+              
+              <View style={styles.currentEventInfoRow}>
+                <Text style={styles.currentEventInfoLabel}>Fecha:</Text>
+                <Text style={styles.currentEventInfoValue}>
+                  {formatDate(selectedEvent.informacionGeneral?.fechaEvento)}
+                </Text>
+              </View>
+              
+              {selectedEvent.informacionGeneral?.lugarEvento && (
+                <View style={styles.currentEventInfoRow}>
+                  <Text style={styles.currentEventInfoLabel}>Lugar:</Text>
+                  <Text style={styles.currentEventInfoValue}>
+                    {selectedEvent.informacionGeneral.lugarEvento}
+                  </Text>
+                </View>
+              )}
+              
+              <View style={styles.currentEventInfoRow}>
+                <Text style={styles.currentEventInfoLabel}>Estado:</Text>
+                <Text style={[styles.currentEventInfoValue, styles.currentEventStatusValue]}>
+                  {selectedEvent.informacionGeneral?.estado === 'en_curso' ? 'En Curso' : 
+                   selectedEvent.informacionGeneral?.estado === 'programado' ? 'Programado' :
+                   selectedEvent.informacionGeneral?.estado || 'Sin estado'}
+                </Text>
+              </View>
+
+              {userData?.eventos && userData.eventos.length > 1 && (
+                <TouchableOpacity 
+                  style={styles.changeEventButton}
+                  onPress={handleChangeEvent}
+                >
+                  <Text style={styles.changeEventButtonText}>Cambiar Evento</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
 
           {/* Validator Info */}
           {userData?.validator && (
@@ -207,6 +288,34 @@ const styles = StyleSheet.create({
     width: 200,
     height: 80,
   },
+  // Current Event Card
+  currentEventCard: {
+    backgroundColor: 'rgba(16, 185, 129, 0.95)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  changeEventButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  changeEventButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
   // Validator Info Card
   validatorInfoCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -228,6 +337,38 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginBottom: 15,
     textAlign: 'center',
+  },
+  // Current Event specific styles
+  currentEventTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  currentEventInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  currentEventInfoLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+    flex: 1,
+  },
+  currentEventInfoValue: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    flex: 2,
+    textAlign: 'right',
+  },
+  currentEventStatusValue: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   infoRow: {
     flexDirection: 'row',

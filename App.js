@@ -11,6 +11,7 @@ import { QRProvider } from './src/context/QRContext';
 import LoginScreen from './src/screens/LoginScreen';
 import MainTabs from './src/screens/MainTabs';
 import EventDetailScreen from './src/screens/EventDetailScreen';
+import EventSelectionScreen from './src/screens/EventSelectionScreen';
 import QRScannerScreen from './src/screens/QRScannerScreen';
 import ValidationMenuScreen from './src/screens/ValidationMenuScreen';
 import TicketValidationScreen from './src/screens/TicketValidationScreen';
@@ -49,6 +50,13 @@ export default function App() {
             component={MainTabs}
             options={{
               title: 'App Principal',
+            }}
+          />
+          <Stack.Screen 
+            name="EventSelection" 
+            component={EventSelectionScreen}
+            options={{
+              title: 'Seleccionar Evento',
             }}
           />
           <Stack.Screen 

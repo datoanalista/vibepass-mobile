@@ -36,6 +36,7 @@ export const QRProvider = ({ children }) => {
 
     console.log('🔄 Initializing validation states with data:', data);
     console.log('🎫 Attendance info:', data.attendance);
+    console.log('🔍 Available data keys:', Object.keys(data));
 
     const newStates = {
       tickets: {},
@@ -43,20 +44,25 @@ export const QRProvider = ({ children }) => {
       activities: {}
     };
 
-    // Handle different QR formats
+    // Handle different QR formats - Updated for new backend structure
     if (data.attendees) {
-      // Full format with attendees
+      // Full format with attendees (original structure)
       data.attendees.forEach((attendee) => {
-        // NEW: Backend now provides isCheckedIn directly on each attendee
         const hasCheckedIn = attendee.isCheckedIn || false;
         newStates.tickets[attendee.index] = hasCheckedIn;
         console.log(`👤 Attendee ${attendee.index} (${attendee.datosPersonales?.nombreCompleto}): checked in = ${hasCheckedIn}${hasCheckedIn ? ` at ${attendee.checkedInAt}` : ''}`);
+      });
+    } else if (data.entradas && Array.isArray(data.entradas)) {
+      // New backend structure with entradas array
+      data.entradas.forEach((entrada, index) => {
+        const hasCheckedIn = entrada.isCheckedIn || false;
+        newStates.tickets[index] = hasCheckedIn;
+        console.log(`🎫 Entrada ${index} (${entrada.tipoEntrada || 'General'}): checked in = ${hasCheckedIn}`);
       });
     } else if (data.tickets && typeof data.tickets === 'number') {
       // Simple format with just ticket count
       for (let i = 0; i < data.tickets; i++) {
         let hasCheckedIn = false;
-        // NEW: Backend now uses attendeeIndex in checkedIn array
         if (data.attendance?.checkedIn && Array.isArray(data.attendance.checkedIn)) {
           hasCheckedIn = data.attendance.checkedIn.some(checkedIn => checkedIn.attendeeIndex === i);
         }
@@ -66,22 +72,34 @@ export const QRProvider = ({ children }) => {
     }
 
     // Initialize food validation states (remaining quantity)
-    // API returns 'products' with new cantidadDisponible field
+    // Handle both old and new backend structures
     if (data.products && Array.isArray(data.products)) {
+      // Original structure
       data.products.forEach((item) => {
-        // NEW: Use cantidadDisponible from backend (cantidadComprada - cantidadCanjeada)
         newStates.food[item.id] = item.cantidadDisponible || 0;
         console.log(`🍽️ Product ${item.nombre}: ${item.cantidadDisponible} available (${item.cantidadComprada} bought, ${item.cantidadCanjeada} redeemed)`);
+      });
+    } else if (data.alimentosBebestibles && Array.isArray(data.alimentosBebestibles)) {
+      // New backend structure
+      data.alimentosBebestibles.forEach((item) => {
+        newStates.food[item.id] = item.cantidadDisponible || 0;
+        console.log(`🍽️ Alimento ${item.nombre}: ${item.cantidadDisponible} available (${item.cantidadComprada} bought, ${item.cantidadCanjeada} redeemed)`);
       });
     }
 
     // Initialize activity validation states (remaining quantity)
-    // API returns 'activities' with new cantidadDisponible field
+    // Handle both old and new backend structures
     if (data.activities && Array.isArray(data.activities)) {
+      // Original structure
       data.activities.forEach((item) => {
-        // NEW: Use cantidadDisponible from backend (cantidadComprada - cantidadCanjeada)
         newStates.activities[item.id] = item.cantidadDisponible || 0;
         console.log(`🎯 Activity ${item.nombreActividad}: ${item.cantidadDisponible} available (${item.cantidadComprada} bought, ${item.cantidadCanjeada} redeemed)`);
+      });
+    } else if (data.actividades && Array.isArray(data.actividades)) {
+      // New backend structure
+      data.actividades.forEach((item) => {
+        newStates.activities[item.id] = item.cantidadDisponible || 0;
+        console.log(`🎯 Actividad ${item.nombreActividad}: ${item.cantidadDisponible} available (${item.cantidadComprada} bought, ${item.cantidadCanjeada} redeemed)`);
       });
     }
 
@@ -197,10 +215,25 @@ export const QRProvider = ({ children }) => {
       const result = await ApiService.redeemProducts(saleNumber, redemptions);
       
       if (result.success) {
-        // Update local state to reflect the redemptions
-        redemptions.forEach(redemption => {
-          redeemFoodItem(redemption.itemId, redemption.cantidad);
-        });
+        console.log('✅ Products redeemed successfully, refreshing QR data...');
+        
+        // Refresh QR data from backend to get updated quantities
+        try {
+          const updatedSaleDetails = await ApiService.getSaleDetails(saleNumber);
+          if (updatedSaleDetails) {
+            console.log('✅ QR data refreshed after product redemption');
+            setQrData(updatedSaleDetails);
+            // Re-initialize validation states with updated data
+            initializeValidationStates(updatedSaleDetails);
+          }
+        } catch (refreshError) {
+          console.error('⚠️ Failed to refresh QR data, using local update:', refreshError);
+          // Fallback: Update local state only
+          redemptions.forEach(redemption => {
+            redeemFoodItem(redemption.itemId, redemption.cantidad);
+          });
+        }
+        
         return result;
       } else {
         throw new Error(result.message || 'Products redemption failed');
@@ -222,10 +255,25 @@ export const QRProvider = ({ children }) => {
       const result = await ApiService.redeemActivities(saleNumber, redemptions);
       
       if (result.success) {
-        // Update local state to reflect the redemptions
-        redemptions.forEach(redemption => {
-          redeemActivityItem(redemption.itemId, redemption.cantidad);
-        });
+        console.log('✅ Activities redeemed successfully, refreshing QR data...');
+        
+        // Refresh QR data from backend to get updated quantities
+        try {
+          const updatedSaleDetails = await ApiService.getSaleDetails(saleNumber);
+          if (updatedSaleDetails) {
+            console.log('✅ QR data refreshed after activity redemption');
+            setQrData(updatedSaleDetails);
+            // Re-initialize validation states with updated data
+            initializeValidationStates(updatedSaleDetails);
+          }
+        } catch (refreshError) {
+          console.error('⚠️ Failed to refresh QR data, using local update:', refreshError);
+          // Fallback: Update local state only
+          redemptions.forEach(redemption => {
+            redeemActivityItem(redemption.itemId, redemption.cantidad);
+          });
+        }
+        
         return result;
       } else {
         throw new Error(result.message || 'Activities redemption failed');
@@ -240,20 +288,51 @@ export const QRProvider = ({ children }) => {
   const getValidationSummary = () => {
     if (!qrData) return null;
 
-    const totalAttendees = qrData.attendees?.length || 0;
+    // Calculate total attendees from different possible structures
+    const totalAttendees = qrData.attendees?.length || 
+                          qrData.entradas?.length || 
+                          qrData.tickets || 0;
     const enteredAttendees = Object.values(validationStates.tickets).filter(Boolean).length;
 
-    const totalFoodItems = qrData.food?.items?.reduce((sum, item) => sum + item.cantidad, 0) || 0;
-    const redeemedFoodItems = qrData.food?.items?.reduce((sum, item) => {
-      const remaining = validationStates.food[item.id] || 0;
-      return sum + (item.cantidad - remaining);
-    }, 0) || 0;
+    // Calculate food items from different possible structures
+    let totalFoodItems = 0;
+    let redeemedFoodItems = 0;
 
-    const totalActivityItems = qrData.activities?.items?.reduce((sum, item) => sum + item.cantidad, 0) || 0;
-    const redeemedActivityItems = qrData.activities?.items?.reduce((sum, item) => {
-      const remaining = validationStates.activities[item.id] || 0;
-      return sum + (item.cantidad - remaining);
-    }, 0) || 0;
+    if (qrData.products && Array.isArray(qrData.products)) {
+      // Original structure
+      totalFoodItems = qrData.products.reduce((sum, item) => sum + (item.cantidadComprada || 0), 0);
+      redeemedFoodItems = qrData.products.reduce((sum, item) => {
+        const remaining = validationStates.food[item.id] || 0;
+        return sum + ((item.cantidadComprada || 0) - remaining);
+      }, 0);
+    } else if (qrData.alimentosBebestibles && Array.isArray(qrData.alimentosBebestibles)) {
+      // New structure
+      totalFoodItems = qrData.alimentosBebestibles.reduce((sum, item) => sum + (item.cantidadComprada || 0), 0);
+      redeemedFoodItems = qrData.alimentosBebestibles.reduce((sum, item) => {
+        const remaining = validationStates.food[item.id] || 0;
+        return sum + ((item.cantidadComprada || 0) - remaining);
+      }, 0);
+    }
+
+    // Calculate activity items from different possible structures
+    let totalActivityItems = 0;
+    let redeemedActivityItems = 0;
+
+    if (qrData.activities && Array.isArray(qrData.activities)) {
+      // Original structure
+      totalActivityItems = qrData.activities.reduce((sum, item) => sum + (item.cantidadComprada || 0), 0);
+      redeemedActivityItems = qrData.activities.reduce((sum, item) => {
+        const remaining = validationStates.activities[item.id] || 0;
+        return sum + ((item.cantidadComprada || 0) - remaining);
+      }, 0);
+    } else if (qrData.actividades && Array.isArray(qrData.actividades)) {
+      // New structure
+      totalActivityItems = qrData.actividades.reduce((sum, item) => sum + (item.cantidadComprada || 0), 0);
+      redeemedActivityItems = qrData.actividades.reduce((sum, item) => {
+        const remaining = validationStates.activities[item.id] || 0;
+        return sum + ((item.cantidadComprada || 0) - remaining);
+      }, 0);
+    }
 
     return {
       tickets: { total: totalAttendees, entered: enteredAttendees },

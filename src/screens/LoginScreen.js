@@ -9,11 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Toast from 'react-native-toast-message';
 import ApiService from '../services/api';
 import StorageService from '../services/storage';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -58,20 +63,53 @@ const LoginScreen = ({ navigation }) => {
       
       if (result.success) {
         console.log('✅ Login successful:', result.data);
+        console.log('🔐 Token received:', result.token ? 'Token exists' : 'No token');
         
         // Save user data and token
         if (result.token) {
+          console.log('💾 Saving token...');
           await StorageService.saveToken(result.token);
+          console.log('✅ Token saved successfully');
+        } else {
+          console.error('❌ No token received from login response');
         }
         
         if (result.data) {
+          console.log('💾 Saving user data...');
           await StorageService.saveUserData(result.data);
+          console.log('✅ User data saved successfully');
         }
         
         await StorageService.saveRememberMe(rememberMe);
         
-        // Navigate directly to tabs without alert
-        navigation.replace('MainTabs');
+        // Verify token was saved
+        const savedToken = await StorageService.getToken();
+        console.log('🔍 Token verification after save:', savedToken ? 'Token exists in storage' : 'No token in storage');
+        
+        // Check if validator has multiple events
+        const eventos = result.data.eventos || [];
+        console.log('🎪 Events available for validator:', eventos.length);
+        
+        if (eventos.length === 0) {
+          console.log('❌ No events assigned to validator');
+          Toast.show({
+            type: 'error',
+            text1: 'Sin eventos asignados',
+            text2: 'No hay eventos asignados a este validador.',
+            visibilityTime: 5000,
+          });
+          return;
+        } else if (eventos.length === 1) {
+          // Auto-select the only event
+          const eventoId = eventos[0].id;
+          console.log('🎪 Auto-selecting single event:', eventoId);
+          await StorageService.saveSelectedEvent(eventoId);
+          navigation.replace('MainTabs');
+        } else {
+          // Multiple events - need to show selection screen
+          console.log('🎪 Multiple events available, showing selection screen');
+          navigation.replace('EventSelection', { eventos });
+        }
       } else {
         Toast.show({
           type: 'error',
@@ -94,207 +132,194 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={styles.container}>
       <StatusBar style="light" backgroundColor="#1B2735" />
       
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.formContainer}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>¡Bienvenido a Vibepass!</Text>
-            <Text style={styles.subtitle}>App de Validadores</Text>
-          </View>
+      {/* Welcome Image - Top Section */}
+      <View style={styles.imageContainer}>
+        <Image
+          source={require('../../assets/login_image.png')}
+          style={styles.welcomeImage}
+          resizeMode="cover"
+        />
+      </View>
 
-          {/* Form */}
+      {/* Form Section - Bottom */}
+      <KeyboardAvoidingView 
+        style={styles.formSection}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.form}>
             {/* Email Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Correo electrónico</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="correo@ejemplo.com"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWrapper}>
+                <Image
+                  source={require('../../assets/icon_user.png')}
+                  style={styles.inputIcon}
+                  resizeMode="contain"
+                />
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Ingresa tu email"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+              </View>
             </View>
 
             {/* Password Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Contraseña</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="••••••••"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
+              <Text style={styles.label}>Clave</Text>
+              <View style={styles.inputWrapper}>
+                <Image
+                  source={require('../../assets/icon_pass.png')}
+                  style={styles.inputIcon}
+                  resizeMode="contain"
+                />
+                <TextInput
+                  style={styles.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Ingresa tu clave"
+                  placeholderTextColor="#9CA3AF"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+              </View>
             </View>
 
-            {/* Remember Me */}
-            <TouchableOpacity 
-              style={styles.rememberContainer}
-              onPress={() => setRememberMe(!rememberMe)}
-              disabled={loading}
-            >
-              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                {rememberMe && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.rememberText}>Recordar cuenta</Text>
+            {/* Forgot Password */}
+            <TouchableOpacity style={styles.forgotPasswordContainer}>
+              <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
             {/* Login Button */}
             <TouchableOpacity 
-              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              style={styles.loginButton}
               onPress={handleLogin}
               disabled={loading}
             >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.loginButtonText}>
-                  Iniciar Sesión
-                </Text>
-              )}
+              <LinearGradient
+                colors={['#01A8E2', '#99B7DB']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientButton}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Ingresar</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              App para validadores de eventos Vibepass
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      
       <Toast />
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1B2735',
+    backgroundColor: '#FFFFFF',
+  },
+  imageContainer: {
+    flex: 0.55,
+    position: 'relative',
+    zIndex: 1,
+  },
+  welcomeImage: {
+    width: '100%',
+    height: '100%',
+  },
+  formSection: {
+    flex: 0.45,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -30,
+    zIndex: 0,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  formContainer: {
-    backgroundColor: 'rgba(217, 217, 217, 0.8)',
-    borderRadius: 10,
-    padding: 40,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#374151',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 20,
   },
   form: {
-    marginBottom: 20,
+    flex: 1,
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontFamily: 'Inter',
+    fontWeight: '600',
+    fontSize: 16,
+    lineHeight: 16,
+    letterSpacing: 0,
+    color: '#1B2735',
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 15,
-    fontSize: 16,
-    color: '#374151',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  rememberContainer: {
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
+    width: width * 0.9,
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#B8B8B8',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
   },
-  checkbox: {
+  inputIcon: {
     width: 20,
     height: 20,
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    borderRadius: 4,
-    backgroundColor: '#FFFFFF',
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 2,
+    marginRight: 12,
+    tintColor: '#9CA3AF',
   },
-  checkboxChecked: {
-    backgroundColor: '#2E7CE4',
-    borderColor: '#2E7CE4',
-  },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  rememberText: {
+  input: {
+    flex: 1,
+    fontFamily: 'Inter',
+    fontWeight: '400',
     fontSize: 14,
-    color: '#374151',
-    fontWeight: '500',
+    lineHeight: 14,
+    letterSpacing: 0,
+    color: '#1B2735',
+    padding: 0,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 30,
+  },
+  forgotPasswordText: {
+    fontFamily: 'Inter',
+    fontWeight: '400',
+    fontSize: 14,
+    color: '#9CA3AF',
   },
   loginButton: {
-    backgroundColor: '#2E7CE4',
-    borderRadius: 10,
-    padding: 15,
-    alignItems: 'center',
+    width: width * 0.9,
+    alignSelf: 'center',
+    height: 59,
+    borderRadius: 5,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -302,24 +327,19 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 4,
   },
-  loginButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+  gradientButton: {
+    flex: 1,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    fontFamily: 'Inter',
     fontWeight: 'bold',
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  footerText: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
+    fontSize: 16,
+    color: '#FFFFFF',
   },
 });
 

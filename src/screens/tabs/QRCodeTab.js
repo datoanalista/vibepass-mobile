@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { CameraView, Camera } from 'expo-camera';
 import { useQR } from '../../context/QRContext';
 import ApiService from '../../services/api';
+import StorageService from '../../services/storage';
 
 const QRCodeTab = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState(null);
@@ -40,6 +41,13 @@ const QRCodeTab = ({ navigation }) => {
       // Parse QR data
       const qrData = JSON.parse(data);
       
+      // Log QR event info for debugging
+      console.log('🎫 QR Event info:', {
+        saleNumber: qrData.saleNumber,
+        evento: qrData.evento,
+        fecha: qrData.fecha
+      });
+      
       // Validate QR data structure - be more flexible
       if (!qrData.saleId && !qrData.saleNumber && !qrData.eventoId && !qrData._id) {
         throw new Error('QR inválido - No contiene ID de venta válido');
@@ -49,9 +57,22 @@ const QRCodeTab = ({ navigation }) => {
       if ((qrData.saleId || qrData.saleNumber) && !qrData.attendees) {
         console.log('🔍 Simple QR detected, fetching complete sale details...');
         
+        // Verify token is available and valid before making API call
+        const token = await StorageService.getToken();
+        console.log('🔐 Token check before API call:', token ? 'Token available' : 'No token available');
+        
+        if (!token) {
+          throw new Error('No hay token de autenticación. Por favor inicie sesión nuevamente.');
+        }
+        
+        // Skip token verification - go directly to getSaleDetails
+        // The getSaleDetails method will handle token validation properly
+        console.log('🔐 Skipping separate token verification, proceeding with sale details...');
+        
         try {
           // Use saleNumber if available, otherwise use saleId
           const saleIdentifier = qrData.saleNumber || qrData.saleId;
+          console.log('🔍 Fetching details for sale:', saleIdentifier);
           const saleDetails = await ApiService.getSaleDetails(saleIdentifier);
           
           if (saleDetails.success) {
@@ -72,14 +93,26 @@ const QRCodeTab = ({ navigation }) => {
           }
         } catch (error) {
           console.log('⚠️ Error fetching sale details, using simple format:', error.message);
-          // Continue with simple format if API call fails
-          // Add a flag to indicate this is simple format
-          const simpleFormatData = {
-            ...qrData,
-            isSimpleFormat: true,
-            errorMessage: 'No se pudieron obtener los datos completos de la venta'
-          };
-          setQRData(simpleFormatData);
+          
+          // Check if it's a permission issue
+          if (error.message.includes('No tiene permisos para validar este evento')) {
+            console.log('🚫 Permission issue detected - using simple format with warning');
+            const simpleFormatData = {
+              ...qrData,
+              isSimpleFormat: true,
+              errorMessage: 'El validador no tiene permisos para este evento específico. Mostrando información básica del QR.',
+              permissionIssue: true
+            };
+            setQRData(simpleFormatData);
+          } else {
+            // Continue with simple format if API call fails
+            const simpleFormatData = {
+              ...qrData,
+              isSimpleFormat: true,
+              errorMessage: 'No se pudieron obtener los datos completos de la venta'
+            };
+            setQRData(simpleFormatData);
+          }
         }
       } else {
         // This is already a complete QR or doesn't need additional data
@@ -91,6 +124,7 @@ const QRCodeTab = ({ navigation }) => {
       // Navigate to validation menu
       setTimeout(() => {
         setLoading(false);
+        // Navigate to ValidationMenu screen in the stack
         navigation.navigate('ValidationMenu');
       }, 1500); // Increased timeout to allow for API call
 
@@ -98,7 +132,19 @@ const QRCodeTab = ({ navigation }) => {
       console.log('⚠️ QR code not valid:', error.message);
       setLoading(false);
       
-      // Show elegant error modal instead of console error
+      // Check if it's a token error and handle accordingly
+      if (error.message.includes('No hay token') || error.message.includes('Token inválido.')) {
+        console.log('🔐 Token error detected, redirecting to login');
+        // Clear stored data and redirect to login
+        await StorageService.clearUserData();
+        navigation.replace('Login');
+        return;
+      } else if (error.message.includes('No tiene permisos para validar este evento')) {
+        console.log('🚫 Permission error - showing error modal instead of redirecting');
+        // Don't redirect to login for permission issues, just show error
+      }
+      
+      // Show elegant error modal for other errors
       setShowErrorModal(true);
       
       // Reset scanned state after showing modal

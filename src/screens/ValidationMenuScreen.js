@@ -58,25 +58,38 @@ const ValidationMenuScreen = ({ navigation }) => {
     }
   };
 
-  // Check if each category has items
+  // Check if each category has items - Updated for new backend structure
   const hasTickets = (qrData?.attendees && qrData.attendees.length > 0) || 
-                     (qrData?.tickets && qrData.tickets > 0);
+                     (qrData?.tickets && qrData.tickets > 0) ||
+                     (qrData?.entradas && Array.isArray(qrData.entradas) && qrData.entradas.length > 0);
   
-  // Fix: API returns 'activities' as direct array, not activities.items
-  const hasActivities = qrData?.activities && Array.isArray(qrData.activities) && qrData.activities.length > 0;
+  // Check for activities - Updated for new backend structure
+  const hasActivities = (qrData?.activities && Array.isArray(qrData.activities) && qrData.activities.length > 0) ||
+                        (qrData?.actividades && Array.isArray(qrData.actividades) && qrData.actividades.length > 0);
   
-  // Fix: API returns 'products' instead of 'food.items'
-  const hasFood = qrData?.products && Array.isArray(qrData.products) && qrData.products.length > 0;
+  // Check for food/products - Updated for new backend structure
+  const hasFood = (qrData?.products && Array.isArray(qrData.products) && qrData.products.length > 0) ||
+                  (qrData?.alimentosBebestibles && Array.isArray(qrData.alimentosBebestibles) && qrData.alimentosBebestibles.length > 0);
 
   // Debug logging
-  console.log('🔍 ValidationMenu - Fixed structure check:', {
+  console.log('🔍 ValidationMenu - Updated structure check:', {
     hasQRData: !!qrData,
     hasTickets,
     hasActivities,
     hasFood,
+    // Original structure
     productsCount: qrData?.products?.length || 0,
     activitiesCount: qrData?.activities?.length || 0,
-    attendeesCount: qrData?.attendees?.length || 0
+    attendeesCount: qrData?.attendees?.length || 0,
+    ticketsCount: qrData?.tickets || 0,
+    // New structure
+    entradasCount: qrData?.entradas?.length || 0,
+    actividadesCount: qrData?.actividades?.length || 0,
+    alimentosBebestiblesCount: qrData?.alimentosBebestibles?.length || 0,
+    // Event info
+    eventName: qrData?.event?.nombre || qrData?.evento || qrData?.informacionGeneral?.nombreEvento,
+    // Full QR data structure for debugging
+    qrDataKeys: qrData ? Object.keys(qrData) : []
   });
 
   return (
@@ -97,19 +110,24 @@ const ValidationMenuScreen = ({ navigation }) => {
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* Event Info Card */}
-          {(qrData?.event || qrData?.evento) && (
+          {(qrData?.event || qrData?.evento || qrData?.informacionGeneral) && (
             <View style={styles.eventInfoCard}>
               <Text style={styles.eventInfoTitle}>📋 Información de la compra</Text>
               <View style={styles.eventInfoRow}>
                 <Text style={styles.eventInfoLabel}>Evento:</Text>
                 <Text style={styles.eventInfoValue}>
-                  {qrData.event?.nombre || qrData.evento}
+                  {qrData.event?.nombre || 
+                   qrData.evento || 
+                   qrData.informacionGeneral?.nombreEvento || 
+                   'N/A'}
                 </Text>
               </View>
               <View style={styles.eventInfoRow}>
                 <Text style={styles.eventInfoLabel}>Fecha:</Text>
                 <Text style={styles.eventInfoValue}>
-                  {formatDate(qrData.event?.fecha || qrData.fecha)}
+                  {formatDate(qrData.event?.fecha || 
+                             qrData.fecha || 
+                             qrData.informacionGeneral?.fechaEvento)}
                 </Text>
               </View>
               <View style={styles.eventInfoRow}>
@@ -124,6 +142,23 @@ const ValidationMenuScreen = ({ navigation }) => {
                   ${(qrData.totals?.total || qrData.total || 0).toLocaleString()}
                 </Text>
               </View>
+            </View>
+          )}
+
+          {/* Warning for simple format */}
+          {qrData?.isSimpleFormat && (
+            <View style={[styles.warningCard, qrData.permissionIssue && styles.permissionWarningCard]}>
+              <Text style={styles.warningTitle}>
+                {qrData.permissionIssue ? '🚫 Problema de permisos' : '⚠️ Información limitada'}
+              </Text>
+              <Text style={styles.warningText}>
+                {qrData.errorMessage || 'Mostrando información básica del QR. Los datos detallados de asistentes no están disponibles.'}
+              </Text>
+              {qrData.permissionIssue && (
+                <Text style={styles.permissionHelpText}>
+                  Contacte al administrador para verificar que el validador esté correctamente asignado al evento.
+                </Text>
+              )}
             </View>
           )}
 
@@ -407,6 +442,44 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  warningCard: {
+    backgroundColor: 'rgba(251, 191, 36, 0.95)',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  permissionWarningCard: {
+    backgroundColor: 'rgba(239, 68, 68, 0.95)',
+  },
+  warningTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#92400E',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  warningText: {
+    fontSize: 12,
+    color: '#92400E',
+    textAlign: 'center',
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+  permissionHelpText: {
+    fontSize: 11,
+    color: '#92400E',
+    textAlign: 'center',
+    lineHeight: 14,
+    fontStyle: 'italic',
   },
 });
 

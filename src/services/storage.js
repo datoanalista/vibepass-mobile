@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   USER_TOKEN: 'userToken',
   USER_DATA: 'userData',
   REMEMBER_ME: 'rememberMe',
+  SELECTED_EVENT: 'selectedEvent',
 };
 
 class StorageService {
@@ -95,6 +96,29 @@ class StorageService {
     }
   }
 
+  // Save selected event
+  async saveSelectedEvent(eventId) {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_EVENT, eventId);
+      console.log('✅ Selected event saved:', eventId);
+    } catch (error) {
+      console.error('❌ Error saving selected event:', error);
+      throw error;
+    }
+  }
+
+  // Get selected event
+  async getSelectedEvent() {
+    try {
+      const eventId = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_EVENT);
+      console.log('📱 Selected event retrieved:', eventId ? 'Event exists' : 'No event selected');
+      return eventId;
+    } catch (error) {
+      console.error('❌ Error getting selected event:', error);
+      return null;
+    }
+  }
+
   // Check if user is logged in
   async isLoggedIn() {
     try {
@@ -106,6 +130,21 @@ class StorageService {
     } catch (error) {
       console.error('❌ Error checking login status:', error);
       return false;
+    }
+  }
+
+  // Clear all user data (logout)
+  async clearUserData() {
+    try {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.USER_TOKEN,
+        STORAGE_KEYS.USER_DATA,
+        STORAGE_KEYS.SELECTED_EVENT,
+      ]);
+      console.log('✅ User data cleared successfully');
+    } catch (error) {
+      console.error('❌ Error clearing user data:', error);
+      throw error;
     }
   }
 }
